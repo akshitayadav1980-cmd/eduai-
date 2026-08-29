@@ -1,0 +1,166 @@
+import { motion } from 'framer-motion'
+import { Sparkles, BookOpen, Globe, ArrowRight, ShieldCheck } from 'lucide-react'
+import { useAppStore } from '../../store/useAppStore'
+import { getLanguageById } from '../../data/languages'
+
+interface HomeSectionProps {
+  onNavigateToYourAI: () => void
+  onNavigateToLessons: () => void
+}
+
+export function HomeSection({ onNavigateToYourAI, onNavigateToLessons }: HomeSectionProps) {
+  const { currentStudent, isDarkMode, selectedLanguageId } = useAppStore()
+
+  const studentName = currentStudent?.name || 'Akshita'
+  const studentId = currentStudent?.id || 'STU-2026-88'
+  const activeLanguage = getLanguageById(selectedLanguageId) || getLanguageById('hi')
+
+  // Derive student initials for the avatar
+  const initials = studentName
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
+
+  return (
+    <section id="home" className="w-full max-w-6xl mx-auto space-y-10 pt-4 pb-16">
+      
+      {/* ── Editorial Header / Welcome ── */}
+      <div className="space-y-2 text-left">
+        <span
+          className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[10px] font-bold tracking-[0.25em] uppercase border ${
+            isDarkMode
+              ? 'bg-white/[0.04] border-white/[0.08] text-cyan-400'
+              : 'bg-[#FAFAF8] border-black/[0.05] text-cyan-700 shadow-subtle'
+          }`}
+        >
+          STUDENT WORKSPACE
+        </span>
+
+        <h1 className="font-display text-3xl sm:text-5xl font-extrabold tracking-tight">
+          Welcome back, {studentName}.
+        </h1>
+        <p className={`text-sm sm:text-base ${isDarkMode ? 'text-[#A3A39E]' : 'text-[#6F6F6A]'}`}>
+          Your multilingual learning space is active and calibrated to your cognitive level.
+        </p>
+      </div>
+
+      {/* ── Premium Student Information & Profile Area ── */}
+      <div
+        className={`p-8 sm:p-10 rounded-3xl border text-left theme-transition ${
+          isDarkMode
+            ? 'bg-[#141418]/80 border-white/[0.08] shadow-2xl backdrop-blur-xl'
+            : 'bg-[#FAFAF8] border-black/[0.06] shadow-editorial'
+        }`}
+      >
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 pb-8 border-b border-black/[0.06] dark:border-white/[0.08]">
+          
+          {/* Profile Avatar & Primary Info */}
+          <div className="flex items-center gap-6">
+            {/* Sophisticated Profile Monogram */}
+            <div className="relative shrink-0">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-br from-cyan-500/20 via-indigo-500/10 to-violet-500/20 border-2 border-cyan-400/40 flex items-center justify-center font-display text-2xl sm:text-3xl font-bold text-cyan-600 dark:text-cyan-300 shadow-glow-cyan-subtle">
+                {initials}
+              </div>
+              <div
+                className="absolute -bottom-1 -right-1 p-1.5 rounded-full bg-emerald-500 text-white border-2 border-[#FAFAF8] dark:border-[#141418]"
+                title="Active Profile"
+              >
+                <ShieldCheck size={14} />
+              </div>
+            </div>
+
+            {/* Name and Designation */}
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-3">
+                <h2 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-[#171717] dark:text-[#F5F5F5]">
+                  {studentName}
+                </h2>
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20">
+                  Student
+                </span>
+              </div>
+
+              <p className={`text-xs sm:text-sm font-medium ${isDarkMode ? 'text-[#A3A39E]' : 'text-[#6F6F6A]'}`}>
+                ID: <span className="font-mono text-[#171717] dark:text-[#F5F5F5] font-semibold">{studentId}</span>
+              </p>
+              <p className={`text-xs ${isDarkMode ? 'text-[#737373]' : 'text-[#A3A39E]'}`}>
+                Cohort 2026 · Secondary Level (Class 10) · Vernacular AI Network
+              </p>
+            </div>
+          </div>
+
+          {/* Calibrated Language Badge */}
+          <div className="flex items-center gap-3 self-start md:self-auto px-4 py-2.5 rounded-2xl border border-black/[0.05] dark:border-white/[0.08] bg-white/50 dark:bg-white/[0.03]">
+            <Globe size={18} className="text-cyan-500 shrink-0" />
+            <div className="text-xs">
+              <span className={`block font-bold ${isDarkMode ? 'text-[#F5F5F5]' : 'text-[#171717]'}`}>
+                {activeLanguage?.nativeName || 'हिन्दी'} ({activeLanguage?.name || 'Hindi'})
+              </span>
+              <span className={`text-[10px] ${isDarkMode ? 'text-[#737373]' : 'text-[#A3A39E]'}`}>
+                Active Dialect Engine
+              </span>
+            </div>
+          </div>
+
+        </div>
+
+        {/* ── Quick Shortcut Action Tiles ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-8">
+          
+          {/* Tile 1: Jump to YOUR AI */}
+          <motion.div
+            whileHover={{ y: -2 }}
+            onClick={onNavigateToYourAI}
+            className={`p-6 rounded-2xl border text-left cursor-pointer transition-all duration-200 ${
+              isDarkMode
+                ? 'bg-white/[0.03] hover:bg-white/[0.06] border-white/[0.06] hover:border-cyan-400/30'
+                : 'bg-white/70 hover:bg-white border-black/[0.05] hover:border-cyan-500/30 shadow-subtle'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-2.5 rounded-xl bg-cyan-500/10 text-cyan-500">
+                <Sparkles size={20} />
+              </div>
+              <ArrowRight size={16} className="text-[#A3A39E]" />
+            </div>
+            <h3 className="font-display text-lg font-bold tracking-tight mb-1">
+              Ask YOUR AI
+            </h3>
+            <p className={`text-xs ${isDarkMode ? 'text-[#A3A39E]' : 'text-[#6F6F6A]'}`}>
+              Translate and understand any concept in your mother tongue with visual synthesis.
+            </p>
+          </motion.div>
+
+          {/* Tile 2: Jump to LESSONS */}
+          <motion.div
+            whileHover={{ y: -2 }}
+            onClick={onNavigateToLessons}
+            className={`p-6 rounded-2xl border text-left cursor-pointer transition-all duration-200 ${
+              isDarkMode
+                ? 'bg-white/[0.03] hover:bg-white/[0.06] border-white/[0.06] hover:border-violet-400/30'
+                : 'bg-white/70 hover:bg-white border-black/[0.05] hover:border-violet-500/30 shadow-subtle'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <div className="p-2.5 rounded-xl bg-violet-500/10 text-violet-500">
+                <BookOpen size={20} />
+              </div>
+              <ArrowRight size={16} className="text-[#A3A39E]" />
+            </div>
+            <h3 className="font-display text-lg font-bold tracking-tight mb-1">
+              Explore Lessons
+            </h3>
+            <p className={`text-xs ${isDarkMode ? 'text-[#A3A39E]' : 'text-[#6F6F6A]'}`}>
+              Interactive subject marquees across Physics, Math, Chemistry, and Languages.
+            </p>
+          </motion.div>
+
+        </div>
+
+      </div>
+
+    </section>
+  )
+}
