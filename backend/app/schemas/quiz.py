@@ -1,0 +1,232 @@
+"""
+Pydantic schemas for the Quiz Generation & Evaluation Engine.
+
+Endpoints:
+    POST /api/v1/quizzes/generate — generate an educational quiz
+    POST /api/v1/quizzes/evaluate — deterministically score student answers
+"""
+
+from __future__ import annotations
+
+from datetime import datetime, timezone
+from typing import Optional
+
+from pydantic import BaseModel, Field, field_validator
+
+from app.schemas.qa import ContextEntry, SUPPORTED_EDUCATION_LEVELS, SUPPORTED_LANG_CODES
+
+SUPPORTED_DIFFICULTIES: frozenset[str] = frozenset({"easy", "medium", "hard"})
+
+
+# ── Question Schemas ───────────────────────────────────────────────────────────
+
+class QuizQuestionPublic(BaseModel):
+    """A quiz question as presented to the student (WITHOUT the correct answer)."""
+
+    id: str = Field(description="Question identifier within the quiz (e.g. 'q1').")
+    question: str = Field(description="The question prompt text.")
+    options: list[str] = Field(description="List of multiple-choice options.")
+    type: str = Field(default="mcq", description="Question format (e.g. 'mcq').")
+    difficulty: str = Field(description="Difficulty tier: easy, medium, or hard.")
+
+
+class QuestionEvaluationItem(BaseModel):
+    """A question with answer key for ad-hoc or direct evaluation."""
+
+    id: str = Field(description="Question identifier (e.g. 'q1').")
+    question: str = Field(description="The question prompt text.")
+    options: list[str] = Field(description="List of options.")
+    correct_answer: str = Field(description="The correct option or answer text.")
+    explanation: Optional[str] = Field(
+        default=None,
+        description="Explanation of why this answer is correct.",
+    )
+
+
+# ── Generation Request & Response ──────────────────────────────────────────────
+
+class GenerateQuizRequest(BaseModel):
+    """Body for POST /api/v1/quizzes/generate."""
+
+    topic: str = Field(
+        ...,
+        description="Subject, topic, or vocabulary domain for the quiz.",
+        min_length=1,
+        max_length=200,
+        examples=["Water & Nature in Kurukh", "Basic Hindi Science Terms"],
+    )
+    language: str = Field(
+        default="hin",
+        description="ISO 639-3 language code for the quiz (kru, hin, eng).",
+        examples=["hin", "eng", "kru"],
+    )
+    education_level: str = Field(
+        default="secondary",
+        description="Adaptive pedagogy education level.",
+        examples=["primary", "secondary", "higher_secondary", "college", "professional"],
+    )
+    difficulty: str = Field(
+        default="medium",
+        description="Quiz difficulty level (easy, medium, hard).",
+        examples=["easy", "medium", "hard"],
+    )
+    num_questions: int = Field(
+        default=5,
+        description="Number of questions to generate (1 to 20).",
+        ge=1,
+        le=20,
+        examples=[5],
+    )
+
+    @field_validator("topic")
+    @classmethod
+    def validate_topic(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("topic must not be empty or whitespace-only.")
+        return v
+
+    @field_validator("language")
+    @classmethod
+    def validate_language(cls, v: str) -> str:
+        v = v.strip().lower()
+        if v not in SUPPORTED_LANG_CODES:
+            raise ValueError(
+                f"language '{v}' is not supported. Supported codes: {sorted(SUPPORTED_LANG_CODES)}."
+            )
+        return v
+
+    @field_validator("education_level")
+    @classmethod
+    def validate_education_level(cls, v: str) -> str:
+        v = v.strip().lower()
+        if v not in SUPPORTED_EDUCATION_LEVELS:
+            raise ValueError(
+                f"education_level '{v}' is not supported. Supported values: {sorted(SUPPORTED_EDUCATION_LEVELS)}."
+            )
+        return v
+
+    @field_validator("difficulty")
+    @classmethod
+    def validate_difficulty(cls, v: str) -> str:
+        v = v.strip().lower()
+        if v not in SUPPORTED_DIFFICULTIES:
+            raise ValueError(
+                f"difficulty '{v}' is not supported. Supported values: {sorted(SUPPORTED_DIFFICULTIES)}."
+            )
+        return v
+
+
+class GenerateQuizResponse(BaseModel):
+    """Response from POST /api/v1/quizzes/generate."""
+
+    quiz_id: str = Field(description="Unique identifier for the generated quiz.")
+    topic: str = Field(description="Topic of the quiz.")
+    language: str = Field(description="Language code of the quiz.")
+    education_level: str = Field(description="Target education level.")
+    difficulty: str = Field(description="Difficulty tier.")
+    total_questions: int = Field(description="Total questions generated.")
+    questions: list[QuizQuestionPublic] = Field(
+        default_factory=list,
+        description="Generated questions without revealing correct answers.",
+    )
+    method: str = Field(
+        description=(
+            "'quiz_rag'       — questions grounded in verified dictionary vocabulary + LLM. "
+            "'quiz_llm'       — questions generated by LLM (general educational knowledge). "
+            "'not_configured' — GROQ_API_KEY is not configured. "
+            "'ai_error'       — Groq LLM encountered a service error."
+        )
+    )
+    retrieved_context: list[ContextEntry] = Field(
+        default_factory=list,
+        description="Verified vocabulary entries retrieved for grounding.",
+    )
+    context_count: int = Field(
+        default=0,
+        description="Count of retrieved vocabulary items.",
+    )
+    message: Optional[str] = Field(
+        default=None,
+        description="Descriptive message, especially if generation was not possible.",
+    )
+    created_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        description="Timestamp when the quiz was generated.",
+    )
+
+
+# ── Evaluation Request & Response ──────────────────────────────────────────────
+
+class AnswerSubmission(BaseModel):
+    """An answer submitted by a student for a specific question."""
+
+    question_id: str = Field(description="ID of the question being answered.")
+    selected_option: str = Field(
+        ...,
+        description="Option chosen by the student (e.g. 'A', 'A) Option Text', or option text).",
+    )
+
+    @field_validator("question_id")
+    @classmethod
+    def validate_question_id(cls, v: str) -> str:
+        v = v.strip()
+        if not v:
+            raise ValueError("question_id must not be empty.")
+        return v
+
+
+class QuizEvaluateRequest(BaseModel):
+    """Body for POST /api/v1/quizzes/evaluate."""
+
+    quiz_id: Optional[str] = Field(
+        default=None,
+        description="Identifier of the quiz generated via /generate.",
+    )
+    answers: list[AnswerSubmission] = Field(
+        description="List of student answers.",
+    )
+    questions: Optional[list[QuestionEvaluationItem]] = Field(
+        default=None,
+        description="Optional list of questions with answer keys (for ad-hoc testing/evaluations).",
+    )
+
+    @field_validator("answers")
+    @classmethod
+    def validate_answers(cls, v: list[AnswerSubmission]) -> list[AnswerSubmission]:
+        if not v:
+            raise ValueError("answers list must not be empty.")
+        return v
+
+
+class QuestionResult(BaseModel):
+    """Per-question evaluation outcome."""
+
+    question_id: str = Field(description="Question identifier.")
+    question: str = Field(description="Original question prompt.")
+    selected_option: Optional[str] = Field(
+        default=None,
+        description="Option submitted by the student.",
+    )
+    correct_answer: str = Field(description="Correct answer for this question.")
+    is_correct: bool = Field(description="Whether the student's answer was correct.")
+    explanation: Optional[str] = Field(
+        default=None,
+        description="Pedagogical explanation of the correct answer.",
+    )
+
+
+class QuizEvaluateResponse(BaseModel):
+    """Response returned after deterministic answer evaluation."""
+
+    quiz_id: Optional[str] = Field(default=None, description="Quiz ID if available.")
+    total_questions: int = Field(description="Total questions evaluated.")
+    correct_answers: int = Field(description="Number of correctly answered questions.")
+    incorrect_answers: int = Field(description="Number of incorrect or unanswered questions.")
+    score: int = Field(description="Raw score (number of correct answers).")
+    percentage: float = Field(description="Score percentage (0.0 - 100.0).")
+    passed: bool = Field(description="True if percentage >= 60.0%.")
+    results: list[QuestionResult] = Field(
+        default_factory=list,
+        description="Per-question evaluation results with explanations.",
+    )

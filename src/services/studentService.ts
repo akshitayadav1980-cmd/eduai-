@@ -1,13 +1,40 @@
 /**
  * studentService
  *
- * Handles all student-related data operations.
- * Currently uses mock data; replace with real API calls in later steps.
+ * Handles student data operations and progress tracking.
+ * Connects to /api/v1/progress/me and /api/v1/progress/record.
  */
 
-import type { Student, LearningProgress } from '../types'
+import { apiClient } from './apiClient'
+import type {
+  Student,
+  LearningProgress,
+  StudentProgressSummary,
+  RecordActivityPayload,
+  ActivityResponse,
+} from '../types'
 
-// ─── Mock Data ────────────────────────────────────────────────────────────────
+// ─── Real Backend Progress Operations ─────────────────────────────────────────
+
+/**
+ * Fetch authenticated student's cumulative learning progress summary.
+ * Endpoint: GET /api/v1/progress/me
+ */
+export async function fetchMyProgress(): Promise<StudentProgressSummary> {
+  return apiClient.get<StudentProgressSummary>('/progress/me')
+}
+
+/**
+ * Record a completed learning activity (quiz, lesson, or practice session).
+ * Endpoint: POST /api/v1/progress/record
+ */
+export async function recordActivity(
+  payload: RecordActivityPayload,
+): Promise<ActivityResponse> {
+  return apiClient.post<ActivityResponse>('/progress/record', payload)
+}
+
+// ─── Legacy / Compatibility Stubs ─────────────────────────────────────────────
 
 const MOCK_STUDENTS: Student[] = [
   {
@@ -20,20 +47,15 @@ const MOCK_STUDENTS: Student[] = [
   },
 ]
 
-// ─── Service Functions ────────────────────────────────────────────────────────
-
-/** Fetch all students (mock). */
 export async function fetchStudents(): Promise<Student[]> {
   return Promise.resolve(MOCK_STUDENTS)
 }
 
-/** Fetch a single student by id (mock). */
 export async function fetchStudentById(id: string): Promise<Student | null> {
   const student = MOCK_STUDENTS.find((s) => s.id === id) ?? null
   return Promise.resolve(student)
 }
 
-/** Fetch progress records for a student (mock). */
 export async function fetchStudentProgress(
   studentId: string,
 ): Promise<LearningProgress[]> {

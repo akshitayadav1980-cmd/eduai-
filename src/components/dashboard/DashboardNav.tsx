@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Sun, Moon, Search, Menu } from 'lucide-react'
+import { Sun, Moon, Search, Menu, LogOut } from 'lucide-react'
 import { useAppStore } from '../../store/useAppStore'
 
 interface DashboardNavProps {
@@ -15,8 +15,19 @@ export function DashboardNav({
   onToggleSidebar,
   activeSectionTitle = 'HOME',
 }: DashboardNavProps) {
-  const { voiceEnabled, setVoiceEnabled, isDarkMode, setIsDarkMode } = useAppStore()
+  const navigate = useNavigate()
+  const { voiceEnabled, setVoiceEnabled, isDarkMode, setIsDarkMode, logout, authUser } = useAppStore()
   const [searchOpen, setSearchOpen] = useState(false)
+
+  const handleLogout = () => {
+    const role = authUser?.role
+    logout()
+    if (role === 'teacher') {
+      navigate('/login/teacher')
+    } else {
+      navigate('/login/student')
+    }
+  }
 
   return (
     <header
@@ -138,6 +149,21 @@ export function DashboardNav({
           >
             {isDarkMode ? <Sun size={14} className="text-amber-400" /> : <Moon size={14} className="text-indigo-600" />}
             <span className="hidden sm:inline">{isDarkMode ? 'Light' : 'Dark'}</span>
+          </button>
+
+          {/* Logout Button */}
+          <button
+            onClick={handleLogout}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border theme-transition cursor-pointer ${
+              isDarkMode
+                ? 'bg-white/[0.04] hover:bg-rose-500/15 hover:border-rose-500/30 text-[#A3A39E] hover:text-rose-400 border-white/[0.08]'
+                : 'bg-black/[0.03] hover:bg-rose-50 hover:border-rose-300 text-[#6F6F6A] hover:text-rose-600 border-black/[0.06]'
+            }`}
+            title="Log Out"
+            aria-label="Log Out"
+          >
+            <LogOut size={14} />
+            <span className="hidden sm:inline">Logout</span>
           </button>
 
         </div>

@@ -1,0 +1,1 @@
+# Vernacular AI — application package

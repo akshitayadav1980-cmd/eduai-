@@ -1,0 +1,73 @@
+"""
+Async PostgreSQL loader for the Kurukh-Hindi-English dictionary.
+
+Loads the teammate SQL file into the vernacular_ai PostgreSQL database.
+
+Install dependency (already in backend/requirements.txt):
+    pip install asyncpg
+
+Set the environment variable before running:
+    DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@localhost:5432/vernacular_ai
+
+Run from the project root or the database/ directory:
+    python "database/load_dictionary pyy db"
+
+The script will:
+  1. Connect to the vernacular_ai database.
+  2. Execute the full SQL file (creates tables, inserts 299 entries).
+  3. Print a confirmation with entry and category counts.
+
+WARNING: The SQL file uses DROP TABLE IF EXISTS ... CASCADE, so running
+this script more than once will wipe and recreate the vocabulary tables.
+"""
+
+import asyncio
+import os
+from pathlib import Path
+
+import asyncpg
+
+
+# Points at the PostgreSQL SQL file in the same directory as this script.
+SQL_FILE = Path(__file__).with_name(
+    "kurukh_hindi_english_dictionary_postgresql for db"
+)
+
+
+async def main() -> None:
+    database_url = os.getenv("DATABASE_URL")
+    if not database_url:
+        raise RuntimeError(
+            "DATABASE_URL is not set.\n"
+            "Example:\n"
+            "  DATABASE_URL=postgresql://postgres:YOUR_PASSWORD"
+            "@localhost:5432/vernacular_ai"
+        )
+
+    if not SQL_FILE.exists():
+        raise FileNotFoundError(
+            f"SQL file not found: {SQL_FILE}\n"
+            "Make sure the PostgreSQL SQL file is in the database/ directory."
+        )
+
+    sql = SQL_FILE.read_text(encoding="utf-8")
+
+    print(f"Connecting to: {database_url.split('@')[-1]}")  # hide credentials
+    conn = await asyncpg.connect(database_url)
+    try:
+        await conn.execute(sql)
+
+        total = await conn.fetchval("SELECT COUNT(*) FROM vocabulary_entries")
+        categories = await conn.fetchval("SELECT COUNT(*) FROM categories")
+
+        print(
+            f"Loaded successfully into vernacular_ai:\n"
+            f"  {total} vocabulary entries\n"
+            f"  {categories} categories"
+        )
+    finally:
+        await conn.close()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

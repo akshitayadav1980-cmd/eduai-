@@ -1,0 +1,45 @@
+# ── Vernacular AI Backend — Python dependencies ──────────────────────────────
+#
+# Install:
+#   pip install -r requirements.txt
+
+# ── Web framework ─────────────────────────────────────────────────────────────
+fastapi==0.115.12
+
+# ── ASGI server ───────────────────────────────────────────────────────────────
+uvicorn[standard]==0.34.3
+
+# ── Data validation ───────────────────────────────────────────────────────────
+pydantic==2.11.4
+
+# ── Database ──────────────────────────────────────────────────────────────────
+# SQLAlchemy 2.x async ORM + PostgreSQL async driver
+sqlalchemy[asyncio]==2.0.41
+asyncpg==0.30.0
+
+# ── Environment variable loading ──────────────────────────────────────────────
+python-dotenv==1.2.1
+
+# ── Testing ───────────────────────────────────────────────────────────────────
+pytest==8.3.5
+httpx==0.28.1          # ASGI test client used by FastAPI's TestClient
+pytest-asyncio==0.24.0 # async test support for Groq client unit tests
+
+# ── Typing / async base ───────────────────────────────────────────────────────
+anyio==4.9.0
+
+# ── AI / LLM ──────────────────────────────────────────────────────────────────
+# Groq API client — used for AI fallback translation when a word is not in
+# the vocabulary dictionary. Requires GROQ_API_KEY in backend/.env.
+groq==0.29.0
+
+# ── Authentication ────────────────────────────────────────────────────────────
+# JWT token creation/validation.
+python-jose[cryptography]==3.3.0
+# Password hashing with bcrypt.
+# bcrypt 4.x is required — passlib 1.7.4 is incompatible with bcrypt 5+.
+passlib[bcrypt]==1.7.4
+bcrypt==4.2.0
+
+# ── File uploads (required for Form + UploadFile in STT endpoint) ─────────────
+python-multipart==0.0.20

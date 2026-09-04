@@ -2,12 +2,14 @@
  * teacherService
  *
  * Handles all teacher-related data operations.
- * Currently uses mock data; replace with real API calls in later steps.
+ * Mock teacher lookups are preserved for any legacy consumers.
+ * Real backend integration added for the teacher dashboard student list.
  */
 
-import type { Teacher } from '../types'
+import type { Teacher, StudentListProgressResponse } from '../types'
+import { apiClient } from './apiClient'
 
-// ─── Mock Data ────────────────────────────────────────────────────────────────
+// ─── Mock Data (kept for legacy consumers) ────────────────────────────────────
 
 const MOCK_TEACHERS: Teacher[] = [
   {
@@ -20,7 +22,7 @@ const MOCK_TEACHERS: Teacher[] = [
   },
 ]
 
-// ─── Service Functions ────────────────────────────────────────────────────────
+// ─── Mock Service Functions ────────────────────────────────────────────────────
 
 /** Fetch all teachers (mock). */
 export async function fetchTeachers(): Promise<Teacher[]> {
@@ -31,4 +33,19 @@ export async function fetchTeachers(): Promise<Teacher[]> {
 export async function fetchTeacherById(id: string): Promise<Teacher | null> {
   const teacher = MOCK_TEACHERS.find((t) => t.id === id) ?? null
   return Promise.resolve(teacher)
+}
+
+// ─── Real Backend: Teacher Dashboard ──────────────────────────────────────────
+
+/**
+ * Fetch all students' progress summaries from the real backend.
+ *
+ * Endpoint:  GET /api/v1/progress/students
+ * Auth:      Requires teacher JWT (Authorization: Bearer <token>)
+ * Throws:    ApiError with status 401 (not authenticated) or 403 (not a teacher)
+ *
+ * Security: apiClient injects the JWT automatically. Never logs secrets.
+ */
+export async function fetchStudentsProgress(): Promise<StudentListProgressResponse> {
+  return apiClient.get<StudentListProgressResponse>('/progress/students')
 }

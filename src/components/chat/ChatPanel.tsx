@@ -9,7 +9,7 @@ import { speechService } from '../../services/speech'
 import type { ChatMessage } from '../../services/ai'
 
 export function ChatPanel() {
-  const { assistantState, setAssistantState } = useAppStore()
+  const { assistantState, setAssistantState, selectedLanguageId, educationLevel } = useAppStore()
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<ChatMessage[]>([
     { id: '1', role: 'assistant', content: 'Hello! How can I help you today?', timestamp: new Date().toISOString() }
@@ -40,7 +40,11 @@ export function ChatPanel() {
     speechService.stopSpeaking()
 
     try {
-      const response = await aiService.chat({ message: text.trim() })
+      const response = await aiService.chat({
+        message: text.trim(),
+        languageId: selectedLanguageId,
+        context: { educationLevel },
+      })
       
       setMessages(prev => [...prev, response.message])
       setAssistantState({ mode: 'speaking', message: 'Responding...' })
@@ -52,8 +56,7 @@ export function ChatPanel() {
       }
       
       setAssistantState({ mode: 'idle', message: null })
-    } catch (error) {
-      console.error('AI Service Error:', error)
+    } catch {
       setErrorText('Failed to connect to the assistant. Please try again.')
       setAssistantState({ mode: 'error', message: 'Connection failed' })
       
@@ -65,9 +68,14 @@ export function ChatPanel() {
     }
   }
 
+  const [micStopFn, setMicStopFn] = useState<(() => void) | null>(null)
+
   const handleMicClick = () => {
     if (assistantState.mode === 'listening') {
-      // It will auto-stop or we can force stop (abort returned from listen)
+      if (micStopFn) {
+        micStopFn()
+        setMicStopFn(null)
+      }
       setAssistantState({ mode: 'idle' })
       return
     }
@@ -76,22 +84,25 @@ export function ChatPanel() {
     setErrorText(null)
     speechService.stopSpeaking()
 
-    speechService.listen(
+    const stop = speechService.listen(
       (text) => {
         setInputValue(text)
         setAssistantState({ mode: 'idle', message: null })
+        setMicStopFn(null)
         handleSend(text)
       },
-      (err) => {
-        console.error('Speech recognition error:', err)
+      () => {
         setErrorText('Speech recognition failed. Try typing.')
         setAssistantState({ mode: 'error' })
+        setMicStopFn(null)
         setTimeout(() => {
           setAssistantState({ mode: 'idle', message: null })
           setErrorText(null)
         }, 3000)
-      }
+      },
+      selectedLanguageId
     )
+    setMicStopFn(() => stop)
   }
 
   return (

@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
-import { BookOpen, Atom, Calculator, FlaskConical, Dna, Languages, Cpu, Globe2, Compass } from 'lucide-react'
+import { BookOpen, Atom, Calculator, FlaskConical, Dna, Languages, Cpu, Globe2, Compass, HelpCircle } from 'lucide-react'
 import { useAppStore } from '../../store/useAppStore'
+import { QuizModal } from '../quiz/QuizModal'
 
 interface SubjectItem {
   id: string
@@ -35,6 +36,13 @@ export function LessonsSection() {
   const [isRow1Paused, setIsRow1Paused] = useState(false)
   const [isRow2Paused, setIsRow2Paused] = useState(false)
   const [selectedSubject, setSelectedSubject] = useState<SubjectItem | null>(null)
+  const [isQuizOpen, setIsQuizOpen] = useState(false)
+  const [quizTopic, setQuizTopic] = useState('')
+
+  const handleStartQuiz = (subject: SubjectItem) => {
+    setQuizTopic(`${subject.name} (${subject.nativeName})`)
+    setIsQuizOpen(true)
+  }
 
   return (
     <section id="lessons" className="w-full max-w-6xl mx-auto space-y-8 pt-4 pb-24 text-left">
@@ -81,14 +89,30 @@ export function LessonsSection() {
             </div>
           </div>
 
-          <button
-            onClick={() => setSelectedSubject(null)}
-            className="text-xs text-[#A3A39E] hover:text-cyan-500 cursor-pointer"
-          >
-            Dismiss
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => handleStartQuiz(selectedSubject)}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-cyan-500 text-cinema-950 font-bold text-xs hover:bg-cyan-400 transition-all cursor-pointer shadow-glow-cyan-subtle"
+            >
+              <HelpCircle size={13} />
+              Take Adaptive Quiz
+            </button>
+            <button
+              onClick={() => setSelectedSubject(null)}
+              className="text-xs text-[#A3A39E] hover:text-cyan-500 cursor-pointer"
+            >
+              Dismiss
+            </button>
+          </div>
         </motion.div>
       )}
+
+      {/* ── Adaptive Quiz Modal ── */}
+      <QuizModal
+        isOpen={isQuizOpen}
+        onClose={() => setIsQuizOpen(false)}
+        topic={quizTopic}
+      />
 
       {/* ── Continuous Moving Subject Marquee Container ── */}
       <div className="space-y-6 overflow-hidden py-4">

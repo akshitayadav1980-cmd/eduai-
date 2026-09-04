@@ -12,6 +12,8 @@ import { CinematicBackground } from '../../components/background/CinematicBackgr
 import { useAppStore } from '../../store/useAppStore'
 import { getLanguageById } from '../../data/languages'
 import { getEducationLevelById } from '../../data/educationLevels'
+import { recordActivity } from '../../services/studentService'
+import { toIsoLanguageCode } from '../../services/translationService'
 
 interface TopicNode {
   id: string
@@ -237,7 +239,17 @@ export function LearningSpace() {
                           <Button
                             variant={isCurrent ? 'primary' : 'glass'}
                             size="sm"
-                            onClick={() => navigate(`/tutor?prompt=${encodeURIComponent(`Explain ${node.title} in ${lang?.name}`)}`)}
+                            onClick={() => {
+                              // Fire-and-forget: record lesson start without blocking navigation
+                              recordActivity({
+                                activity_type: 'lesson',
+                                activity_id: node.id,
+                                completed: true,
+                                language: toIsoLanguageCode(selectedLanguageId),
+                                education_level: educationLevel,
+                              }).catch(() => {}) // Silently ignore if unauthenticated
+                              navigate(`/tutor?prompt=${encodeURIComponent(`Explain ${node.title} in ${lang?.name}`)}`)
+                            }}
                             icon={<Play size={13} />}
                           >
                             {isDone ? 'Review' : 'Learn'}
@@ -319,7 +331,17 @@ export function LearningSpace() {
                   variant="glass"
                   size="sm"
                   fullWidth
-                  onClick={() => navigate(`/tutor?prompt=${encodeURIComponent(`Teach me ${title} in ${lang?.name}`)}`)}
+                  onClick={() => {
+                    // Fire-and-forget: record lesson completion without blocking navigation
+                    recordActivity({
+                      activity_type: 'lesson',
+                      activity_id: title.toLowerCase().replace(/ /g, '-'),
+                      completed: true,
+                      language: toIsoLanguageCode(selectedLanguageId),
+                      education_level: educationLevel,
+                    }).catch(() => {}) // Silently ignore if unauthenticated
+                    navigate(`/tutor?prompt=${encodeURIComponent(`Teach me ${title} in ${lang?.name}`)}`)
+                  }}
                   icon={<ArrowRight size={14} />}
                   iconPosition="right"
                 >

@@ -1,37 +1,60 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowRight, User, Hash, Phone, CheckCircle2 } from 'lucide-react'
+import { ArrowRight, User, Hash, Phone, Lock, CheckCircle2, AlertCircle } from 'lucide-react'
 import { AuthPageLayout } from '../../components/auth/AuthPageLayout'
 import { InputField } from '../../components/auth/InputField'
 import { useAppStore } from '../../store/useAppStore'
+import { ApiError } from '../../services/apiClient'
 
 export function StudentLoginPage() {
   const navigate = useNavigate()
-  const { isDarkMode, setSelectedRole, setCurrentStudent, setAssistantState } = useAppStore()
+  const { isDarkMode, login, register, setAssistantState } = useAppStore()
 
+  const [mode, setMode] = useState<'login' | 'register'>('login')
   const [name, setName] = useState('')
   const [studentId, setStudentId] = useState('')
+  const [password, setPassword] = useState('')
   const [phone, setPhone] = useState('')
 
-  const [errors, setErrors] = useState<{ name?: string; studentId?: string; phone?: string }>({})
+  const [errors, setErrors] = useState<{
+    name?: string
+    studentId?: string
+    password?: string
+    phone?: string
+    general?: string
+  }>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
 
-  const validate = () => {
-    const newErrors: { name?: string; studentId?: string; phone?: string } = {}
+  // Normalize studentId to a backend-valid username (alphanumeric + underscore)
+  const sanitizeUsername = (raw: string) => {
+    return raw.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_')
+  }
 
-    if (!name.trim()) {
+  const validate = () => {
+    const newErrors: typeof errors = {}
+
+    if (mode === 'register' && !name.trim()) {
       newErrors.name = 'Please enter your name.'
     }
 
     if (!studentId.trim()) {
-      newErrors.studentId = 'Please enter your Student ID.'
+      newErrors.studentId = 'Please enter your Student ID or username.'
+    } else {
+      const sanitized = sanitizeUsername(studentId)
+      if (sanitized.length < 3) {
+        newErrors.studentId = 'Student ID / username must be at least 3 characters.'
+      }
     }
 
-    if (!phone.trim()) {
-      newErrors.phone = 'Please enter your phone number.'
-    } else if (!/^\+?[\d\s-]{8,15}$/.test(phone.trim())) {
+    if (!password) {
+      newErrors.password = 'Please enter your password.'
+    } else if (password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters.'
+    }
+
+    if (mode === 'register' && phone.trim() && !/^\+?[\d\s-]{8,15}$/.test(phone.trim())) {
       newErrors.phone = 'Please enter a valid phone number.'
     }
 
@@ -39,40 +62,46 @@ export function StudentLoginPage() {
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!validate()) return
 
     setIsSubmitting(true)
-    setSelectedRole('student')
+    setErrors({})
 
-    // Set active student state in store
-    setCurrentStudent({
-      id: studentId.trim(),
-      name: name.trim(),
-      phone: phone.trim(),
-      grade: 10,
-      languageId: 'hi',
-      progress: [],
-      createdAt: new Date().toISOString(),
-    })
+    const username = sanitizeUsername(studentId)
 
-    setAssistantState({
-      mode: 'success',
-      message: `Welcome, ${name.trim()}! Initializing your personal workspace.`,
-    })
+    try {
+      let user
+      if (mode === 'register') {
+        user = await register(username, password, 'student')
+      } else {
+        user = await login(username, password)
+      }
 
-    setTimeout(() => {
+      if (user.role !== 'student') {
+        throw new Error('This account does not have student access.')
+      }
+
+      setAssistantState({
+        mode: 'success',
+        message: `Welcome, ${user.username}! Initializing your personal workspace.`,
+      })
+
       setIsSubmitting(false)
       setIsSuccess(true)
-    }, 600)
+    } catch (err: any) {
+      setIsSubmitting(false)
+      const message = err instanceof ApiError ? err.message : err.message || 'Authentication failed. Please check your credentials.'
+      setErrors({ general: message })
+    }
   }
 
   return (
     <AuthPageLayout
       eyebrow="STUDENT"
       heading="Welcome to Vernacular AI."
-      supportingText="Let's personalize your learning experience."
+      supportingText={mode === 'login' ? 'Sign in to access your vernacular workspace.' : "Let's personalize your learning experience."}
     >
       {isSuccess ? (
         <motion.div
@@ -89,7 +118,7 @@ export function StudentLoginPage() {
               Profile Verified
             </h3>
             <p className="text-xs text-[#6F6F6A] dark:text-[#A3A39E]">
-              Welcome, {name}. Your vernacular profile is ready.
+              Welcome back. Your vernacular profile is ready.
             </p>
           </div>
 
@@ -107,34 +136,77 @@ export function StudentLoginPage() {
         </motion.div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Staggered Inputs */}
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.2 }}
-          >
-            <InputField
-              label="Name"
-              placeholder="e.g. Aarav Sharma"
-              value={name}
-              onChange={(e) => {
-                setName(e.target.value)
-                if (errors.name) setErrors((prev) => ({ ...prev, name: undefined }))
-              }}
-              error={errors.name}
-              icon={<User size={17} />}
-              autoComplete="name"
-            />
-          </motion.div>
+          {/* General Error Banner */}
+          {errors.general && (
+            <div className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center gap-2.5 text-xs text-rose-500 font-medium">
+              <AlertCircle size={16} className="shrink-0" />
+              <span>{errors.general}</span>
+            </div>
+          )}
 
+          {/* Mode Switch Tabs */}
+          <div className="flex rounded-xl p-1 bg-black/[0.04] dark:bg-white/[0.04] border border-black/[0.05] dark:border-white/[0.06]">
+            <button
+              type="button"
+              onClick={() => {
+                setMode('login')
+                setErrors({})
+              }}
+              className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                mode === 'login'
+                  ? 'bg-white dark:bg-white/[0.1] text-cyan-600 dark:text-cyan-400 shadow-sm'
+                  : 'text-[#737373] hover:text-[#171717] dark:hover:text-[#F5F5F5]'
+              }`}
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMode('register')
+                setErrors({})
+              }}
+              className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                mode === 'register'
+                  ? 'bg-white dark:bg-white/[0.1] text-cyan-600 dark:text-cyan-400 shadow-sm'
+                  : 'text-[#737373] hover:text-[#171717] dark:hover:text-[#F5F5F5]'
+              }`}
+            >
+              Create Account
+            </button>
+          </div>
+
+          {/* Name Field (Register Mode Only) */}
+          {mode === 'register' && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+            >
+              <InputField
+                label="Full Name"
+                placeholder="e.g. Aarav Sharma"
+                value={name}
+                onChange={(e) => {
+                  setName(e.target.value)
+                  if (errors.name) setErrors((prev) => ({ ...prev, name: undefined }))
+                }}
+                error={errors.name}
+                icon={<User size={17} />}
+                autoComplete="name"
+              />
+            </motion.div>
+          )}
+
+          {/* Student ID / Username */}
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.3 }}
+            transition={{ duration: 0.3 }}
           >
             <InputField
-              label="Student ID"
-              placeholder="e.g. STU-2026-88"
+              label={mode === 'login' ? 'Student ID or Username' : 'Desired Student ID / Username'}
+              placeholder="e.g. aarav_sharma or stu2026"
               value={studentId}
               onChange={(e) => {
                 setStudentId(e.target.value)
@@ -146,30 +218,55 @@ export function StudentLoginPage() {
             />
           </motion.div>
 
+          {/* Password Field */}
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.4 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
           >
             <InputField
-              label="Phone Number"
-              placeholder="e.g. +91 98765 43210"
-              value={phone}
+              label="Password"
+              type="password"
+              placeholder="••••••••"
+              value={password}
               onChange={(e) => {
-                setPhone(e.target.value)
-                if (errors.phone) setErrors((prev) => ({ ...prev, phone: undefined }))
+                setPassword(e.target.value)
+                if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }))
               }}
-              error={errors.phone}
-              icon={<Phone size={17} />}
-              autoComplete="tel"
+              error={errors.password}
+              helperText={mode === 'register' ? 'Minimum 8 characters' : undefined}
+              icon={<Lock size={17} />}
+              autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
             />
           </motion.div>
 
-          {/* Continue Button */}
+          {/* Phone Field (Optional, for compatibility) */}
+          {mode === 'register' && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+            >
+              <InputField
+                label="Phone Number (Optional)"
+                placeholder="e.g. +91 98765 43210"
+                value={phone}
+                onChange={(e) => {
+                  setPhone(e.target.value)
+                  if (errors.phone) setErrors((prev) => ({ ...prev, phone: undefined }))
+                }}
+                error={errors.phone}
+                icon={<Phone size={17} />}
+                autoComplete="tel"
+              />
+            </motion.div>
+          )}
+
+          {/* Submit Button */}
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.5 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
             className="pt-2"
           >
             <button
@@ -182,7 +279,7 @@ export function StudentLoginPage() {
               }`}
             >
               <span className={isDarkMode ? 'text-[#171717]' : 'text-[#FFFFFF]'}>
-                {isSubmitting ? 'Personalizing...' : 'Continue'}
+                {isSubmitting ? (mode === 'login' ? 'Signing in...' : 'Creating Account...') : mode === 'login' ? 'Sign In' : 'Create Student Profile'}
               </span>
               {!isSubmitting && <ArrowRight size={16} />}
             </button>

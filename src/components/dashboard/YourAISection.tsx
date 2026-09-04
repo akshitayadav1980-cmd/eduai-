@@ -6,6 +6,8 @@ import {
 } from 'lucide-react'
 import { LANGUAGES, getLanguageById } from '../../data/languages'
 import { useAppStore } from '../../store/useAppStore'
+import { chatWithTutor } from '../../services/tutorService'
+import { ApiError } from '../../services/apiClient'
 
 interface ChatMessage {
   id: string
@@ -105,8 +107,279 @@ const INITIAL_HISTORY: HistoryItem[] = [
   },
 ]
 
+interface VisualConcept {
+  keywords: string[]
+  url: string
+  title: string
+  description: string
+}
+
+const DEFAULT_VISUAL: { url: string; title: string; description: string } = {
+  url: 'https://images.unsplash.com/photo-1507413245164-6160d8298b31?auto=format&fit=crop&w=800&q=80',
+  title: 'Multilingual Concept Structure',
+  description: 'Adaptive conceptual breakdown in regional language.',
+}
+
+const VISUAL_CONCEPTS: VisualConcept[] = [
+  {
+    keywords: ['mango', 'mangoes', 'mango tree', 'mangoes grow on trees', 'why do mangoes grow on trees', 'mango fruit', 'mangifera', 'आम', 'आम का पेड़', 'आम का वृक्ष', 'आम्र', 'आम कैसे उगते हैं', 'पेड़ पर आम'],
+    url: 'https://images.unsplash.com/photo-1553279768-865429fa0078?auto=format&fit=crop&w=800&q=80',
+    title: 'Mango (Mangifera indica)',
+    description: 'Tropical stone fruit structure with nutrient-rich pulp, seed, and tree growth cycle.',
+  },
+  {
+    keywords: ['apple', 'apples', 'apple tree', 'pome', 'सेब', 'सेब का पेड़'],
+    url: 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?auto=format&fit=crop&w=800&q=80',
+    title: 'Apple (Malus domestica)',
+    description: 'Pome fruit anatomy with core, seeds, and pectin-rich skin.',
+  },
+  {
+    keywords: ['banana', 'bananas', 'banana tree', 'banana plant', 'केला', 'केले का पेड़', 'कदली'],
+    url: 'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?auto=format&fit=crop&w=800&q=80',
+    title: 'Banana (Musa)',
+    description: 'High-potassium elongated tropical fruit growing in hanging clusters.',
+  },
+  {
+    keywords: ['water', 'waters', 'boil', 'boils', 'boiling', 'water boils', 'water boiling', 'boiling water', 'what happens when water boils', 'steam', 'evaporation', 'hot water', 'fluid dynamics', 'पानी', 'जल', 'पानी उबलना', 'उबलता पानी', 'पानी क्यों उबलता है', 'भाप', 'h2o', 'aqua', 'नीर'],
+    url: 'https://images.unsplash.com/photo-1518837695005-2083093ee35b?auto=format&fit=crop&w=800&q=80',
+    title: 'Water Molecule & Fluid Dynamics (H₂O)',
+    description: 'Polar covalent molecular bond, phase transitions, and boiling thermodynamics.',
+  },
+  {
+    keywords: ['plant', 'plants', 'sprout', 'sprouting', 'flora', 'vegetation', 'botany', 'plant biology', 'पौधा', 'पौधे', 'वनस्पति', 'अंकुरण', 'पौधों'],
+    url: 'https://images.unsplash.com/photo-1485955900006-10f4d324d411?auto=format&fit=crop&w=800&q=80',
+    title: 'Plant Biology & Sprout Growth',
+    description: 'Autotrophic flora with shoot, root, and vascular nutrient transport systems.',
+  },
+  {
+    keywords: ['tree', 'trees', 'forest', 'forests', 'woodland', 'arbor', 'canopy', 'पेड़', 'वृक्ष', 'पेड़', 'जंगल', 'वन', 'तरु', 'पेड़ों'],
+    url: 'https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=800&q=80',
+    title: 'Forest Tree Ecosystem (Arbor)',
+    description: 'Woody perennial with elongated trunk, canopy foliage, and root networks.',
+  },
+  {
+    keywords: ['flower', 'flowers', 'floral', 'pollination', 'petal', 'petals', 'blossom', 'फूल', 'पुष्प', 'कुसुम', 'परागकण', 'फूलों'],
+    url: 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=800&q=80',
+    title: 'Floral Morphology & Pollination',
+    description: 'Angiosperm reproductive structure featuring petals, stamen, and pistil.',
+  },
+  {
+    keywords: ['sun', 'solar', 'sunlight', 'sun shine', 'sun shines', 'sun shining', 'solar energy', 'corona', 'fusion', 'सूर्य', 'सूरज', 'धूप', 'सौर ऊर्जा', 'रवि', 'दिनकर'],
+    url: 'https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?auto=format&fit=crop&w=800&q=80',
+    title: 'Solar Corona & Nuclear Fusion',
+    description: 'G-type main-sequence star radiating electromagnetic and thermal energy.',
+  },
+  {
+    keywords: ['moon', 'moons', 'lunar', 'moonlight', 'moon shine', 'moon shines', 'moon shining', 'why does the moon shine', 'tides', 'tidal', 'चंद्रमा', 'चाँद', 'चांद', 'चाँद चमकना', 'चांदनी', 'शशि', 'चाँद क्यों चमकता है'],
+    url: 'https://images.unsplash.com/photo-1532693322450-2cb5c511067d?auto=format&fit=crop&w=800&q=80',
+    title: 'Lunar Surface & Tidal Gravitation',
+    description: 'Natural satellite reflecting sunlight and governing terrestrial tidal cycles.',
+  },
+  {
+    keywords: ['earth', 'globe', 'planet earth', 'day and night', 'day night cycle', 'earth rotation', 'rotation of earth', 'why do we have day and night', 'terrestrial', 'geosphere', 'biosphere', 'पृथ्वी', 'धरती', 'दिन और रात', 'दिन रात', 'भू', 'दिन और रात कैसे होते हैं'],
+    url: 'https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?auto=format&fit=crop&w=800&q=80',
+    title: 'Planet Earth (Geosphere & Biosphere)',
+    description: 'Habitable planet featuring diurnal rotational day/night cycles and liquid hydrosphere.',
+  },
+  {
+    keywords: ['solar system', 'planets', 'planetary orbits', 'orbit', 'orbits', 'celestial', 'सौर मंडल', 'सौरमंडल', 'ग्रह', 'कक्षा', 'ग्रहों'],
+    url: 'https://images.unsplash.com/photo-1614728423169-3f65fd722b7e?auto=format&fit=crop&w=800&q=80',
+    title: 'Solar System Planetary Orbits',
+    description: 'Gravitationally bound system of the Sun and surrounding celestial bodies.',
+  },
+  {
+    keywords: ['photosynthesis', 'photosynthesis help plants', 'how does photosynthesis help plants', 'how photosynthesis help plants', 'what does the plant need for it', 'what do plants need for it', 'what does a plant need for it', 'plant need for photosynthesis', 'plant need for it', 'plants making food', 'how plants make food', 'plant food', 'chloroplast', 'chlorophyll', 'प्रकाश संश्लेषण', 'प्रकाश-संश्लेषण', 'पौधे भोजन कैसे बनाते हैं', 'पौधों का भोजन'],
+    url: 'https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?auto=format&fit=crop&w=800&q=80',
+    title: 'Photosynthesis & Chloroplast Reactions',
+    description: 'Biological synthesis of glucose and oxygen from sunlight, water, and CO₂.',
+  },
+  {
+    keywords: ['heart', 'hearts', 'cardiac', 'cardiovascular', 'blood circulation', 'circulation', 'pump blood', 'pumps blood', 'pumping blood', 'heart pump blood', 'heart pumps blood', 'how does the human heart pump blood', 'how the human heart pump blood', 'human heart', 'blood vessels', 'artery', 'vein', 'हृदय', 'दिल', 'रक्त', 'खून', 'रक्त संचार', 'हृदय रक्त', 'पंप', 'हृदय रक्त कैसे पंप करता है'],
+    url: 'https://images.unsplash.com/photo-1559757175-5700dde675bc?auto=format&fit=crop&w=800&q=80',
+    title: 'Human Cardiovascular System & Heart',
+    description: 'Muscular organ propelling oxygenated blood through vascular circulation.',
+  },
+  {
+    keywords: ['brain', 'brains', 'neural', 'neuron', 'neurons', 'thinking', 'thought', 'cognition', 'nervous system', 'memory', 'synapse', 'मस्तिष्क', 'दिमाग', 'न्यूरॉन', 'सोचना', 'स्मृति'],
+    url: 'https://images.unsplash.com/photo-1559757148-5c350d0d3c56?auto=format&fit=crop&w=800&q=80',
+    title: 'Human Brain & Neural Network Architecture',
+    description: 'Central nervous system organ coordinating cognition, motor control, and sensory input.',
+  },
+  {
+    keywords: ['human body', 'anatomy', 'body anatomy', 'physiology', 'musculoskeletal', 'skeleton', 'organs', 'मानव शरीर', 'शरीर', 'कंकाल', 'अंग प्रणाली'],
+    url: 'https://images.unsplash.com/photo-1530497610245-94d3c16cda28?auto=format&fit=crop&w=800&q=80',
+    title: 'Human Anatomy & Physiological Systems',
+    description: 'Integrated musculoskeletal, circulatory, and organ systems maintaining biological homeostasis.',
+  },
+  {
+    keywords: ['cat', 'cats', 'kitten', 'kittens', 'feline', 'cat breathing', 'cats need oxygen', 'why do cats need oxygen', 'cat oxygen', 'respiration', 'बिल्ली', 'बिल्लियां', 'बिल्ली सांस', 'ऑक्सीजन', 'बिल्ली को ऑक्सीजन क्यों चाहिए'],
+    url: 'https://images.unsplash.com/photo-1514888286974-6c03e2ca1dba?auto=format&fit=crop&w=800&q=80',
+    title: 'Feline Biology & Respiration (Cat)',
+    description: 'Mammalian respiratory mechanics and metabolic oxygen transport in felines.',
+  },
+  {
+    keywords: ['dog', 'dogs', 'puppy', 'puppies', 'canine', 'hound', 'कुत्ता', 'कुत्ते', 'पिल्ला', 'श्वान'],
+    url: 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=800&q=80',
+    title: 'Canine Anatomy & Sensory Biology (Dog)',
+    description: 'Domesticated carnivoran mammal with acute olfactory and cardiovascular adaptations.',
+  },
+  {
+    keywords: ['computer', 'computers', 'laptop', 'software', 'cpu', 'hardware', 'microprocessor', 'programming', 'code', 'binary', 'कंप्यूटर', 'कम्प्यूटर', 'सॉफ्टवेयर'],
+    url: 'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?auto=format&fit=crop&w=800&q=80',
+    title: 'Computing Hardware & Microprocessor Logic',
+    description: 'Programmable electronic machine executing binary computational instructions.',
+  },
+  {
+    keywords: ['electricity', 'electric', 'electrical', 'voltage', 'current', 'charge', 'circuit', 'electrons', 'power grid', 'बिजली', 'विद्युत', 'धारा', 'करंट'],
+    url: 'https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&w=800&q=80',
+    title: 'Electric Current & Charge Transport',
+    description: 'Flow of electric charge and electromagnetic potential difference through conductors.',
+  },
+  {
+    keywords: ['fire', 'flame', 'flames', 'combustion', 'thermal energy', 'heat', 'burning', 'आग', 'अग्नि', 'ज्वाला', 'दहन'],
+    url: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80',
+    title: 'Combustion & Thermal Energy (Fire)',
+    description: 'Rapid exothermic chemical oxidation releasing radiant heat and luminous flames.',
+  },
+  {
+    keywords: ['air', 'wind', 'winds', 'atmosphere', 'atmospheric', 'air currents', 'oxygen gas', 'nitrogen', 'हवा', 'वायु', 'पवन', 'वायुमंडल'],
+    url: 'https://images.unsplash.com/photo-1534088568595-a066f410bcda?auto=format&fit=crop&w=800&q=80',
+    title: 'Atmospheric Dynamics & Air Currents',
+    description: 'Gaseous mixture of nitrogen, oxygen, and trace elements sustaining planetary climate.',
+  },
+  {
+    keywords: ['soil', 'dirt', 'pedology', 'humus', 'topsoil', 'earth soil', 'minerals', 'मिट्टी', 'मृदा', 'उपजाऊ'],
+    url: 'https://images.unsplash.com/photo-1588681664899-f142ff2dc9b1?auto=format&fit=crop&w=800&q=80',
+    title: 'Pedology & Soil Horizons',
+    description: 'Natural mineral and organic substrate supporting vegetative growth and microbiology.',
+  },
+  {
+    keywords: ['mountain', 'mountains', 'peaks', 'peak', 'tectonic', 'orogeny', 'himalayas', 'elevation', 'पहाड़', 'पर्वत', 'पहाड़', 'शिखर', 'शैल'],
+    url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=800&q=80',
+    title: 'Tectonic Orogeny & Mountain Geomorphology',
+    description: 'Prominent elevated geological landform created by continental plate collisions.',
+  },
+  {
+    keywords: ['river', 'rivers', 'stream', 'streams', 'watershed', 'fluvial', 'waterway', 'नदी', 'जलधारा', 'सरिता', 'नदियां'],
+    url: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=800&q=80',
+    title: 'River Fluvial System & Watershed',
+    description: 'Natural ribbon of freshwater carving continental landscape toward sea basins.',
+  },
+  {
+    keywords: ['animal', 'animals', 'wildlife', 'fauna', 'mammal', 'mammals', 'species', 'biodiversity', 'जानवर', 'पशु', 'जीव', 'जंतु', 'प्राणी'],
+    url: 'https://images.unsplash.com/photo-1474511320723-9a56873867b5?auto=format&fit=crop&w=800&q=80',
+    title: 'Kingdom Animalia & Wildlife Biodiversity',
+    description: 'Multicellular eukaryotic organisms with sensory faculties and motile biology.',
+  },
+  {
+    keywords: ['bird', 'birds', 'avian', 'flight', 'feathers', 'wings', 'ornithology', 'पक्षी', 'चिड़िया', 'चिड़िया', 'विहग', 'पंख'],
+    url: 'https://images.unsplash.com/photo-1444464666168-49d633b86797?auto=format&fit=crop&w=800&q=80',
+    title: 'Avian Biology & Aerodynamic Flight',
+    description: 'Feathered endothermic vertebrates adapted for aerodynamic locomotion.',
+  },
+  {
+    keywords: ['fish', 'fishes', 'aquatic', 'ichthyology', 'gills', 'fins', 'marine life', 'swimming', 'मछली', 'मत्स्य', 'मीन', 'गलफड़े'],
+    url: 'https://images.unsplash.com/photo-1524704654690-b56c05c78a00?auto=format&fit=crop&w=800&q=80',
+    title: 'Aquatic Ichthyology (Fish Biology)',
+    description: 'Gill-bearing aquatic organisms thriving across marine and freshwater ecosystems.',
+  },
+  {
+    keywords: ['gravity', 'gravitational', 'gravitation', 'gravity keep us on earth', 'how does gravity keep us on earth', 'how gravity keep us on earth', 'why objects fall', 'falling objects', 'objects fall', 'gravity pull', 'universal attraction', 'गुरुत्वाकर्षण', 'चीजें नीचे क्यों गिरती हैं', 'नीचे गिरना', 'गुरुत्व'],
+    url: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=800&q=80',
+    title: 'Gravitational Curvature of Spacetime',
+    description: 'Mass warping spatial geometry causing universal orbital attraction and planetary weight.',
+  },
+  {
+    keywords: ['cell', 'cells', 'cellular', 'organelle', 'organelles', 'mitochondria', 'cytoplasm', 'membrane', 'cell division', 'biology cell', 'कोशिका', 'कोशिकाएं', 'कोशिका संरचना'],
+    url: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=800&q=80',
+    title: 'Cellular Organelles & Membrane Dynamics',
+    description: 'Mitochondria, nucleus, and cytoplasm coordinating life processes.',
+  },
+]
+
+function normalizeConceptText(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[.,/#!$%^&*;:{}=\-_`~()?"'।?!]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function matchDirectConcept(text: string): VisualConcept | null {
+  const cleanQuery = normalizeConceptText(text)
+  if (!cleanQuery) return null
+
+  const paddedQuery = ` ${cleanQuery} `
+  let bestMatch: VisualConcept | null = null
+  let highestScore = 0
+
+  for (const concept of VISUAL_CONCEPTS) {
+    for (const rawKeyword of concept.keywords) {
+      const cleanKeyword = normalizeConceptText(rawKeyword)
+      if (!cleanKeyword) continue
+
+      if (paddedQuery.includes(` ${cleanKeyword} `)) {
+        const wordCount = cleanKeyword.split(' ').length
+        // Multi-word phrase matches get boosted priority over single keywords
+        const score = cleanKeyword.length + (wordCount > 1 ? wordCount * 20 : 0)
+
+        if (score > highestScore) {
+          highestScore = score
+          bestMatch = concept
+        }
+      }
+    }
+  }
+
+  return bestMatch
+}
+
+function resolveConversationalVisual(
+  query: string,
+  historyMessages: ChatMessage[],
+  currentActiveVisual: { url: string; title: string; description: string } | null,
+): { url: string; title: string; description: string } {
+  // 1. First priority: Direct concept match in current user turn
+  const direct = matchDirectConcept(query)
+  if (direct) {
+    return {
+      url: direct.url,
+      title: direct.title,
+      description: direct.description,
+    }
+  }
+
+  // 2. Second priority: Contextual follow-up — scan conversation history backwards for active topic
+  for (let i = historyMessages.length - 1; i >= 0; i--) {
+    const msg = historyMessages[i]
+    if (msg.visualUrl && msg.visualUrl !== DEFAULT_VISUAL.url) {
+      return {
+        url: msg.visualUrl,
+        title: msg.visualTitle || 'Conceptual Visualization',
+        description: msg.visualDescription || 'Adaptive conceptual model',
+      }
+    }
+    const histMatch = matchDirectConcept(msg.text)
+    if (histMatch) {
+      return {
+        url: histMatch.url,
+        title: histMatch.title,
+        description: histMatch.description,
+      }
+    }
+  }
+
+  // 3. Third priority: Preserve current active non-default visual
+  if (currentActiveVisual && currentActiveVisual.url !== DEFAULT_VISUAL.url) {
+    return currentActiveVisual
+  }
+
+  // 4. Default fallback for general unmapped inquiries
+  return DEFAULT_VISUAL
+}
+
 export function YourAISection() {
-  const { isDarkMode, voiceEnabled, setVoiceEnabled } = useAppStore()
+  const { isDarkMode, voiceEnabled, setVoiceEnabled, educationLevel } = useAppStore()
 
   // Languages selection state
   const [sourceLangId, setSourceLangId] = useState<string>('hi')
@@ -114,7 +387,8 @@ export function YourAISection() {
   const [showSourceDropdown, setShowSourceDropdown] = useState(false)
   const [showTargetDropdown, setShowTargetDropdown] = useState(false)
 
-  // History panel toggle
+  // History panel toggle & session tracking
+  const [sessionId, setSessionId] = useState<string | null>(null)
   const [historyOpen, setHistoryOpen] = useState(false)
   const [historyList] = useState<HistoryItem[]>(INITIAL_HISTORY)
 
@@ -149,16 +423,17 @@ export function YourAISection() {
   }
 
   const handleSelectHistory = (item: HistoryItem) => {
+    setSessionId(null)
     setSourceLangId(item.sourceLang)
     setTargetLangId(item.targetLang)
     setMessages(item.messages)
     setHistoryOpen(false)
   }
 
-  const handleSendMessage = (e?: React.FormEvent) => {
+  const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
     const query = inputQuery.trim()
-    if (!query) return
+    if (!query || isThinking) return
 
     const userMsg: ChatMessage = {
       id: `usr-${Date.now()}`,
@@ -167,37 +442,41 @@ export function YourAISection() {
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     }
 
+    // Capture existing history snapshot before updating messages state
+    const priorHistory = messages.map((m) => ({
+      role: (m.sender === 'user' ? 'user' : 'assistant') as 'user' | 'assistant',
+      content: m.text,
+      timestamp: new Date().toISOString(),
+    }))
+
     setMessages((prev) => [...prev, userMsg])
     setInputQuery('')
     setIsThinking(true)
 
-    // Simulate intelligent educational Vernacular AI response with dynamic visual
-    setTimeout(() => {
-      let aiText = `Here is the explanation for "${query}" synthesized for your learning level.`
-      let translationText = `अनुवाद (${targetLang?.name || 'Kurukh'}): ${query} गहि माने अरा सांचा समझना।`
-      let visualUrl = 'https://images.unsplash.com/photo-1507413245164-6160d8298b31?auto=format&fit=crop&w=800&q=80'
-      let visualTitle = 'Multilingual Concept Structure'
-      let visualDesc = `Adaptive conceptual breakdown from ${sourceLang?.name} to ${targetLang?.name}.`
+    // Context-aware visual resolution: checks query first, then history topic
+    const visual = resolveConversationalVisual(query, messages, activeVisual)
+    const visualUrl = visual.url
+    const visualTitle = visual.title
+    const visualDesc = visual.description || `Adaptive conceptual breakdown in ${targetLang?.name || 'regional language'}.`
 
-      if (/gravity|गुरुत्वाकर्षण/i.test(query)) {
-        aiText = 'गुरुत्वाकर्षण (Gravity) ब्रह्मांड के किन्हीं दो द्रव्यमानों के बीच लगने वाला आकर्षण बल है।'
-        translationText = 'कुड़ुख अनुवाद: गुरुत्वाकर्षण पृथ्वी गहि अद्दे ताक़त तली जेती हर चीज़ एड़ता तिन ख़िचड़ी।'
-        visualUrl = 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=800&q=80'
-        visualTitle = 'Gravitational Curvature of Spacetime'
-        visualDesc = 'Mass warping spatial geometry causing universal orbital attraction.'
-      } else if (/cell|कोशिका/i.test(query)) {
-        aiText = 'कोशिका (Cell) जीवन की सबसे छोटी संरचनात्मक और कार्यात्मक इकाई है।'
-        translationText = 'कुड़ुख अनुवाद: सेल (कोशिका) उज्जना गहि सबसे सानी टुकड़ी तली।'
-        visualUrl = 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=800&q=80'
-        visualTitle = 'Cellular Organelles & Membrane Dynamics'
-        visualDesc = 'Mitochondria, nucleus, and cytoplasm coordinating life processes.'
+    try {
+      const res = await chatWithTutor(
+        query,
+        sessionId,
+        targetLangId,
+        educationLevel,
+        priorHistory,
+      )
+
+      if (res.session_id && !sessionId) {
+        setSessionId(res.session_id)
       }
 
       const aiMsg: ChatMessage = {
         id: `ai-${Date.now()}`,
         sender: 'ai',
-        text: aiText,
-        translation: translationText,
+        text: res.response,
+        translation: res.language ? `Calibration: ${res.language.toUpperCase()} · ${res.education_level}` : undefined,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         visualUrl,
         visualTitle,
@@ -205,8 +484,21 @@ export function YourAISection() {
       }
 
       setMessages((prev) => [...prev, aiMsg])
+    } catch (err) {
+      const errorMsg = err instanceof ApiError ? err.message : 'Unable to connect to AI Tutor.'
+      const aiMsg: ChatMessage = {
+        id: `ai-${Date.now()}`,
+        sender: 'ai',
+        text: errorMsg,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        visualUrl,
+        visualTitle,
+        visualDescription: visualDesc,
+      }
+      setMessages((prev) => [...prev, aiMsg])
+    } finally {
       setIsThinking(false)
-    }, 1100)
+    }
   }
 
   return (

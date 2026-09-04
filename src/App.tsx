@@ -27,6 +27,8 @@ export default function App() {
         {/* ── Aliases ─────────────────────────────────────────────────── */}
         <Route path="/student/login" element={<Navigate to="/login/student" replace />} />
         <Route path="/teacher/login" element={<Navigate to="/login/teacher" replace />} />
+        <Route path="/tutor" element={<Navigate to="/student/dashboard" replace />} />
+        <Route path="/learning" element={<Navigate to="/student/dashboard" replace />} />
 
         {/* ── Fallback Route ─────────────────────────────────────────── */}
         <Route path="*" element={<Navigate to="/" replace />} />

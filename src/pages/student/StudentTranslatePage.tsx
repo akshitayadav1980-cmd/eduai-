@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { ArrowLeftRight, Mic, Volume2, Copy, Sparkles, Loader2 } from 'lucide-react'
+import { ArrowLeftRight, Mic, Volume2, Copy, Sparkles, Loader2, AlertCircle } from 'lucide-react'
 import { PageHeader } from '../../components/common/PageHeader'
 import { Button } from '../../components/ui/Button'
 import { IconButton } from '../../components/ui/IconButton'
@@ -8,6 +8,8 @@ import { Select } from '../../components/ui/Select'
 import { useAppStore } from '../../store/useAppStore'
 import { LANGUAGES, getLanguageById } from '../../data/languages'
 import { translateText } from '../../services/translationService'
+import { speechService } from '../../services/speech'
+import { ApiError } from '../../services/apiClient'
 import { staggerContainer, staggerItem, fadeUp } from '../../utils/animations'
 
 export function StudentTranslatePage() {
@@ -18,6 +20,9 @@ export function StudentTranslatePage() {
   const [sourceText, setSourceText] = useState('')
   const [targetText, setTargetText] = useState('')
   const [isTranslating, setIsTranslating] = useState(false)
+  const [isRecording, setIsRecording] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [translationMethod, setTranslationMethod] = useState<string | null>(null)
 
   const languageOptions = LANGUAGES.map(l => ({ value: l.id, label: l.name }))
   const sLangInfo = getLanguageById(sourceLang)
@@ -30,10 +35,50 @@ export function StudentTranslatePage() {
     setTargetText(sourceText)
   }
 
+  const handleMicClick = () => {
+    if (isRecording) {
+      speechService.stopSpeaking()
+      setIsRecording(false)
+      return
+    }
+
+    setIsRecording(true)
+    setErrorMessage(null)
+    speechService.stopSpeaking()
+
+    const stopFn = speechService.listen(
+      (transcript) => {
+        setSourceText(transcript)
+        setIsRecording(false)
+      },
+      () => {
+        setIsRecording(false)
+      },
+      sourceLang
+    )
+
+    // Safety fallback
+    setTimeout(() => {
+      setIsRecording(false)
+    }, 9000)
+  }
+
+  const handleSpeakSource = () => {
+    if (!sourceText.trim()) return
+    speechService.speak(sourceText, sLangInfo?.locale || sourceLang)
+  }
+
+  const handleSpeakTarget = () => {
+    if (!targetText.trim()) return
+    speechService.speak(targetText, tLangInfo?.locale || targetLang)
+  }
+
   const handleTranslate = async () => {
     if (!sourceText.trim()) return
     
     setIsTranslating(true)
+    setErrorMessage(null)
+    setTranslationMethod(null)
     try {
       const result = await translateText({
         text: sourceText,
@@ -41,9 +86,13 @@ export function StudentTranslatePage() {
         targetLanguageId: targetLang,
       })
       setTargetText(result.translatedText)
+      setTranslationMethod(result.method ?? null)
     } catch (error) {
-      console.error(error)
-      setTargetText('Error translating text.')
+      const msg = error instanceof ApiError
+        ? error.message
+        : 'Translation failed. Please try again.'
+      setErrorMessage(msg)
+      setTargetText('')
     } finally {
       setIsTranslating(false)
     }
@@ -67,6 +116,17 @@ export function StudentTranslatePage() {
           }
         />
       </motion.div>
+
+      {/* Error Banner */}
+      {errorMessage && (
+        <motion.div
+          variants={fadeUp}
+          className="flex items-center gap-3 px-4 py-3 rounded-xl border border-red-500/30 bg-red-500/10 text-red-300 text-sm"
+        >
+          <AlertCircle size={16} className="shrink-0 text-red-400" />
+          <span>{errorMessage}</span>
+        </motion.div>
+      )}
 
       <motion.div variants={staggerItem} className="glass rounded-2xl border border-white/10 overflow-hidden shadow-card">
         {/* Language Selection Header */}
@@ -107,10 +167,22 @@ export function StudentTranslatePage() {
             />
             <div className="flex items-center justify-between pt-4 mt-auto">
               <div className="flex gap-2">
-                <IconButton label="Speak" variant="ghost" size="sm">
+                <IconButton
+                  label="Speak"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleSpeakSource}
+                  disabled={!sourceText.trim()}
+                >
                   <Volume2 size={16} />
                 </IconButton>
-                <IconButton label="Use microphone" variant="ghost" size="sm">
+                <IconButton
+                  label={isRecording ? 'Listening...' : 'Use microphone'}
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleMicClick}
+                  className={isRecording ? 'text-rose-400 bg-rose-500/15 animate-pulse' : ''}
+                >
                   <Mic size={16} />
                 </IconButton>
               </div>
@@ -137,13 +209,24 @@ export function StudentTranslatePage() {
             </div>
             <div className="flex items-center justify-between pt-4 mt-auto">
               <div className="flex gap-2">
-                <IconButton label="Listen to translation" variant="ghost" size="sm" disabled={!targetText}>
+                <IconButton
+                  label="Listen to translation"
+                  variant="ghost"
+                  size="sm"
+                  disabled={!targetText}
+                  onClick={handleSpeakTarget}
+                >
                   <Volume2 size={16} />
                 </IconButton>
                 <IconButton label="Copy translation" variant="ghost" size="sm" disabled={!targetText}>
                   <Copy size={16} />
                 </IconButton>
               </div>
+              {translationMethod && (
+                <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400">
+                  {translationMethod === 'dictionary' ? '📚 Dictionary' : '🤖 AI'}
+                </span>
+              )}
             </div>
           </div>
         </div>

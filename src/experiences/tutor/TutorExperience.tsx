@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   Send, Mic, Volume2, Globe, Layers, Sparkles,
-  HelpCircle, ArrowRight,
+  HelpCircle, ArrowRight, AlertCircle,
 } from 'lucide-react'
 import { Button } from '../../components/ui/Button'
 import { GlassCard } from '../../components/ui/GlassCard'
@@ -13,9 +13,12 @@ import { FloatingNav } from '../../components/navigation/FloatingNav'
 import { useAppStore } from '../../store/useAppStore'
 import { getLanguageById } from '../../data/languages'
 import { getEducationLevelById } from '../../data/educationLevels'
-import { aiService } from '../../services/ai'
 import { speechService } from '../../services/speech'
+import { createTutorSession, chatWithTutor } from '../../services/tutorService'
+import type { BackendChatMessage } from '../../services/tutorService'
+import { ApiError } from '../../services/apiClient'
 import type { ChatMessage } from '../../services/ai'
+import { QuizModal } from '../../components/quiz/QuizModal'
 
 export function TutorExperience() {
   const [searchParams] = useSearchParams()
@@ -28,10 +31,17 @@ export function TutorExperience() {
     assistantState,
     setAssistantState,
     voiceEnabled,
+    logout,
   } = useAppStore()
 
   const lang = getLanguageById(selectedLanguageId)
   const levelInfo = getEducationLevelById(educationLevel)
+
+  const [sessionId, setSessionId] = useState<string | null>(null)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [backendHistory, setBackendHistory] = useState<BackendChatMessage[]>([])
+  const [isQuizOpen, setIsQuizOpen] = useState(false)
+  const [quizTopic, setQuizTopic] = useState('')
 
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -48,7 +58,47 @@ export function TutorExperience() {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  }, [messages, isProcessing, errorMessage])
+
+  // Initialize Tutor Session on mount or when language/level changes
+  useEffect(() => {
+    let isMounted = true
+    async function initSession() {
+      try {
+        const session = await createTutorSession(selectedLanguageId, educationLevel)
+        if (!isMounted) return
+        setSessionId(session.session_id)
+        if (session.welcome_message) {
+          setMessages((prev) =>
+            prev.length <= 1
+              ? [
+                  {
+                    id: 'welcome-msg',
+                    role: 'assistant',
+                    content: session.welcome_message,
+                    timestamp: session.created_at || new Date().toISOString(),
+                  },
+                ]
+              : prev
+          )
+        }
+      } catch (err) {
+        if (!isMounted) return
+        if (err instanceof ApiError && err.status === 401) {
+          logout()
+          navigate('/login/student')
+          return
+        }
+        // If unauthenticated or network failure, keep initial greeting
+      }
+    }
+
+    initSession()
+
+    return () => {
+      isMounted = false
+    }
+  }, [selectedLanguageId, educationLevel, logout, navigate])
 
   // Handle initial prompt from URL if present
   useEffect(() => {
@@ -60,32 +110,58 @@ export function TutorExperience() {
   const handleSendMessage = async (text: string) => {
     if (!text.trim() || isProcessing) return
 
+    const userText = text.trim()
     const userMessage: ChatMessage = {
       id: crypto.randomUUID(),
       role: 'user',
-      content: text.trim(),
+      content: userText,
       timestamp: new Date().toISOString(),
     }
 
     setMessages((prev) => [...prev, userMessage])
     setInputValue('')
     setIsProcessing(true)
+    setErrorMessage(null)
     setAssistantState({ mode: 'thinking', message: 'Synthesizing vernacular response...' })
     speechService.stopSpeaking()
 
     try {
-      // Send chat request with personalized context
-      const res = await aiService.chat({
-        message: text.trim(),
-        languageId: selectedLanguageId,
-      })
+      // Send chat request to real backend AI Tutor API
+      const res = await chatWithTutor(
+        userText,
+        sessionId,
+        selectedLanguageId,
+        educationLevel,
+        backendHistory,
+      )
 
-      setMessages((prev) => [...prev, res.message])
+      if (res.session_id && !sessionId) {
+        setSessionId(res.session_id)
+      }
+
+      if (res.history && res.history.length > 0) {
+        setBackendHistory(res.history)
+      } else {
+        setBackendHistory((prev) => [
+          ...prev,
+          { role: 'user', content: userText, timestamp: new Date().toISOString() },
+          { role: 'assistant', content: res.response, timestamp: res.created_at || new Date().toISOString() },
+        ])
+      }
+
+      const assistantMsg: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: res.response,
+        timestamp: res.created_at || new Date().toISOString(),
+      }
+
+      setMessages((prev) => [...prev, assistantMsg])
       setAssistantState({ mode: 'speaking', message: 'Speaking...' })
 
       if (voiceEnabled) {
         try {
-          await speechService.speak(res.message.content, lang?.locale ?? 'en-IN')
+          await speechService.speak(res.response, lang?.locale ?? 'en-IN')
         } catch (e) {
           console.warn('TTS playback error', e)
         }
@@ -93,7 +169,13 @@ export function TutorExperience() {
 
       setAssistantState({ mode: 'idle', message: null })
     } catch (err) {
-      console.error('AI Tutor error:', err)
+      if (err instanceof ApiError && err.status === 401) {
+        logout()
+        navigate('/login/student')
+        return
+      }
+      const msg = err instanceof ApiError ? err.message : 'Could not connect to AI Tutor.'
+      setErrorMessage(msg)
       setAssistantState({ mode: 'error', message: 'Could not connect' })
       setTimeout(() => setAssistantState({ mode: 'idle', message: null }), 3000)
     } finally {
@@ -101,8 +183,14 @@ export function TutorExperience() {
     }
   }
 
+  const [micStopFn, setMicStopFn] = useState<(() => void) | null>(null)
+
   const handleMic = () => {
     if (assistantState.mode === 'listening') {
+      if (micStopFn) {
+        micStopFn()
+        setMicStopFn(null)
+      }
       setAssistantState({ mode: 'idle' })
       return
     }
@@ -110,18 +198,21 @@ export function TutorExperience() {
     setAssistantState({ mode: 'listening', message: 'Listening in ' + (lang?.name ?? 'your language') })
     speechService.stopSpeaking()
 
-    speechService.listen(
+    const stop = speechService.listen(
       (transcript) => {
         setInputValue(transcript)
         setAssistantState({ mode: 'idle', message: null })
+        setMicStopFn(null)
         handleSendMessage(transcript)
       },
-      (err) => {
-        console.error('Speech recognition error', err)
+      () => {
         setAssistantState({ mode: 'error' })
+        setMicStopFn(null)
         setTimeout(() => setAssistantState({ mode: 'idle', message: null }), 2500)
-      }
+      },
+      lang?.id
     )
+    setMicStopFn(() => stop)
   }
 
   const handleSpeakMessage = (text: string) => {
@@ -135,7 +226,9 @@ export function TutorExperience() {
     if (actionType === 'simplify') {
       handleSendMessage(`Can you simplify this for a younger learner in ${lang?.name}? "${originalText.slice(0, 100)}..."`)
     } else if (actionType === 'quiz') {
-      handleSendMessage(`Create a quick 2-question quiz on this in ${lang?.name}: "${originalText.slice(0, 100)}..."`)
+      const topicText = originalText.slice(0, 100).replace(/\n/g, ' ').trim()
+      setQuizTopic(topicText || 'General Science')
+      setIsQuizOpen(true)
     } else if (actionType === 'translate') {
       handleSendMessage(`Translate this explanation entirely into ${lang?.nativeName}: "${originalText.slice(0, 100)}..."`)
     } else if (actionType === 'more') {
@@ -262,6 +355,14 @@ export function TutorExperience() {
           </div>
         )}
 
+        {/* Clean Error Message */}
+        {errorMessage && (
+          <div className="flex items-center gap-2 p-3 rounded-2xl bg-red-500/10 border border-red-500/20 w-fit text-xs text-red-300 backdrop-blur-xl">
+            <AlertCircle size={14} className="text-red-400 shrink-0" />
+            <span>{errorMessage}</span>
+          </div>
+        )}
+
         <div ref={messagesEndRef} />
       </main>
 
@@ -311,6 +412,13 @@ export function TutorExperience() {
           </form>
         </GlassCard>
       </div>
+
+      {/* ── Real AI Quiz Modal ── */}
+      <QuizModal
+        isOpen={isQuizOpen}
+        onClose={() => setIsQuizOpen(false)}
+        topic={quizTopic}
+      />
     </div>
   )
 }

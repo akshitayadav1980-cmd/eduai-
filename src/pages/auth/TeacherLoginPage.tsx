@@ -1,71 +1,102 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowRight, User, Award, CheckCircle2 } from 'lucide-react'
+import { ArrowRight, User, Award, Lock, CheckCircle2, AlertCircle } from 'lucide-react'
 import { AuthPageLayout } from '../../components/auth/AuthPageLayout'
 import { InputField } from '../../components/auth/InputField'
 import { useAppStore } from '../../store/useAppStore'
+import { ApiError } from '../../services/apiClient'
 
 export function TeacherLoginPage() {
   const navigate = useNavigate()
-  const { isDarkMode, setSelectedRole, setCurrentTeacher, setAssistantState } = useAppStore()
+  const { isDarkMode, login, register, logout, setAssistantState } = useAppStore()
 
+  const [mode, setMode] = useState<'login' | 'register'>('login')
   const [name, setName] = useState('')
   const [teacherId, setTeacherId] = useState('')
+  const [password, setPassword] = useState('')
 
-  const [errors, setErrors] = useState<{ name?: string; teacherId?: string }>({})
+  const [errors, setErrors] = useState<{
+    name?: string
+    teacherId?: string
+    password?: string
+    general?: string
+  }>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
 
-  const validate = () => {
-    const newErrors: { name?: string; teacherId?: string } = {}
+  const sanitizeUsername = (raw: string) => {
+    return raw.trim().toLowerCase().replace(/[^a-z0-9_]/g, '_')
+  }
 
-    if (!name.trim()) {
+  const validate = () => {
+    const newErrors: typeof errors = {}
+
+    if (mode === 'register' && !name.trim()) {
       newErrors.name = 'Please enter your name.'
     }
 
     if (!teacherId.trim()) {
-      newErrors.teacherId = 'Please enter your Teacher ID.'
+      newErrors.teacherId = 'Please enter your Teacher ID or username.'
+    } else {
+      const sanitized = sanitizeUsername(teacherId)
+      if (sanitized.length < 3) {
+        newErrors.teacherId = 'Teacher ID / username must be at least 3 characters.'
+      }
+    }
+
+    if (!password) {
+      newErrors.password = 'Please enter your password.'
+    } else if (password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters.'
     }
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!validate()) return
 
     setIsSubmitting(true)
-    setSelectedRole('teacher')
+    setErrors({})
 
-    // Set active teacher state in store
-    setCurrentTeacher({
-      id: teacherId.trim(),
-      name: name.trim(),
-      email: `${teacherId.trim().toLowerCase()}@vernacular.edu`,
-      school: 'Vernacular Learning Academy',
-      languagesSupported: ['hi', 'mr', 'en'],
-      studentIds: [],
-      createdAt: new Date().toISOString(),
-    })
+    const username = sanitizeUsername(teacherId)
 
-    setAssistantState({
-      mode: 'success',
-      message: `Welcome, Professor ${name.trim()}! Preparing your educator toolkit.`,
-    })
+    try {
+      let user
+      if (mode === 'register') {
+        user = await register(username, password, 'teacher')
+      } else {
+        user = await login(username, password)
+      }
 
-    setTimeout(() => {
+      // Role-aware security check
+      if (user.role !== 'teacher') {
+        logout()
+        throw new Error('Access denied: This account has student privileges, not educator privileges.')
+      }
+
+      setAssistantState({
+        mode: 'success',
+        message: `Welcome, Professor ${user.username}! Preparing your educator toolkit.`,
+      })
+
       setIsSubmitting(false)
       setIsSuccess(true)
-    }, 600)
+    } catch (err: any) {
+      setIsSubmitting(false)
+      const message = err instanceof ApiError ? err.message : err.message || 'Authentication failed. Please check your credentials.'
+      setErrors({ general: message })
+    }
   }
 
   return (
     <AuthPageLayout
       eyebrow="TEACHER"
       heading="Welcome to Vernacular AI."
-      supportingText="Let's personalize your teaching experience."
+      supportingText={mode === 'login' ? 'Sign in to access your educator workspace.' : "Let's personalize your teaching experience."}
     >
       {isSuccess ? (
         <motion.div
@@ -82,7 +113,7 @@ export function TeacherLoginPage() {
               Credentials Verified
             </h3>
             <p className="text-xs text-[#6F6F6A] dark:text-[#A3A39E]">
-              Welcome, {name}. Your educator workspace is ready.
+              Welcome back. Your educator workspace is ready.
             </p>
           </div>
 
@@ -100,34 +131,77 @@ export function TeacherLoginPage() {
         </motion.div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Staggered Inputs */}
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.2 }}
-          >
-            <InputField
-              label="Name"
-              placeholder="e.g. Dr. Priya Kulkarni"
-              value={name}
-              onChange={(e) => {
-                setName(e.target.value)
-                if (errors.name) setErrors((prev) => ({ ...prev, name: undefined }))
-              }}
-              error={errors.name}
-              icon={<User size={17} />}
-              autoComplete="name"
-            />
-          </motion.div>
+          {/* General Error Banner */}
+          {errors.general && (
+            <div className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center gap-2.5 text-xs text-rose-500 font-medium">
+              <AlertCircle size={16} className="shrink-0" />
+              <span>{errors.general}</span>
+            </div>
+          )}
 
+          {/* Mode Switch Tabs */}
+          <div className="flex rounded-xl p-1 bg-black/[0.04] dark:bg-white/[0.04] border border-black/[0.05] dark:border-white/[0.06]">
+            <button
+              type="button"
+              onClick={() => {
+                setMode('login')
+                setErrors({})
+              }}
+              className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                mode === 'login'
+                  ? 'bg-white dark:bg-white/[0.1] text-cyan-600 dark:text-cyan-400 shadow-sm'
+                  : 'text-[#737373] hover:text-[#171717] dark:hover:text-[#F5F5F5]'
+              }`}
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMode('register')
+                setErrors({})
+              }}
+              className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                mode === 'register'
+                  ? 'bg-white dark:bg-white/[0.1] text-cyan-600 dark:text-cyan-400 shadow-sm'
+                  : 'text-[#737373] hover:text-[#171717] dark:hover:text-[#F5F5F5]'
+              }`}
+            >
+              Register Educator
+            </button>
+          </div>
+
+          {/* Name Field (Register Mode Only) */}
+          {mode === 'register' && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+            >
+              <InputField
+                label="Full Name"
+                placeholder="e.g. Dr. Priya Kulkarni"
+                value={name}
+                onChange={(e) => {
+                  setName(e.target.value)
+                  if (errors.name) setErrors((prev) => ({ ...prev, name: undefined }))
+                }}
+                error={errors.name}
+                icon={<User size={17} />}
+                autoComplete="name"
+              />
+            </motion.div>
+          )}
+
+          {/* Teacher ID / Username */}
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.3 }}
+            transition={{ duration: 0.3 }}
           >
             <InputField
-              label="Teacher ID"
-              placeholder="e.g. TCH-2026-09"
+              label={mode === 'login' ? 'Teacher ID or Username' : 'Desired Teacher ID / Username'}
+              placeholder="e.g. priya_kulkarni or tch2026"
               value={teacherId}
               onChange={(e) => {
                 setTeacherId(e.target.value)
@@ -139,11 +213,33 @@ export function TeacherLoginPage() {
             />
           </motion.div>
 
-          {/* Continue Button */}
+          {/* Password Field */}
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.4 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
+          >
+            <InputField
+              label="Password"
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value)
+                if (errors.password) setErrors((prev) => ({ ...prev, password: undefined }))
+              }}
+              error={errors.password}
+              helperText={mode === 'register' ? 'Minimum 8 characters' : undefined}
+              icon={<Lock size={17} />}
+              autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+            />
+          </motion.div>
+
+          {/* Submit Button */}
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
             className="pt-2"
           >
             <button
@@ -156,7 +252,7 @@ export function TeacherLoginPage() {
               }`}
             >
               <span className={isDarkMode ? 'text-[#171717]' : 'text-[#FFFFFF]'}>
-                {isSubmitting ? 'Personalizing...' : 'Continue'}
+                {isSubmitting ? (mode === 'login' ? 'Verifying...' : 'Registering...') : mode === 'login' ? 'Enter Educator Space' : 'Create Educator Account'}
               </span>
               {!isSubmitting && <ArrowRight size={16} />}
             </button>
