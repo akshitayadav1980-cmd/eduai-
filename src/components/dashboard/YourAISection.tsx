@@ -2,7 +2,8 @@ import React, { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Send, Mic, History, ArrowRight, Sparkles,
-  ChevronDown, Image as ImageIcon, Check, RefreshCw
+  ChevronDown, Image as ImageIcon, Check, RefreshCw,
+  Volume2, VolumeX
 } from 'lucide-react'
 import { LANGUAGES, getLanguageById } from '../../data/languages'
 import { useAppStore } from '../../store/useAppStore'
@@ -378,6 +379,94 @@ function resolveConversationalVisual(
   return DEFAULT_VISUAL
 }
 
+const DEMO_PROMPTS = [
+  '🌱 What is photosynthesis?',
+  '🥭 How do mangoes grow?',
+  '🐱 Why do cats need oxygen?',
+  '❤️ How does the heart work?',
+]
+
+function renderInlineFormatting(line: string, keyPrefix: string): React.ReactNode {
+  // Parse **bold** tokens safely
+  const parts = line.split(/(\*\*.*?\*\*)/g)
+  return (
+    <span key={keyPrefix}>
+      {parts.map((part, idx) => {
+        if (part.startsWith('**') && part.endsWith('**') && part.length >= 4) {
+          return (
+            <strong key={`${keyPrefix}-b-${idx}`} className="font-semibold text-cyan-600 dark:text-cyan-300">
+              {part.slice(2, -2)}
+            </strong>
+          )
+        }
+        return <span key={`${keyPrefix}-t-${idx}`}>{part}</span>
+      })}
+    </span>
+  )
+}
+
+function renderFormattedText(text: string): React.ReactNode {
+  if (!text) return null
+
+  // Split text into paragraph blocks
+  const blocks = text.split(/\n\s*\n/)
+
+  return (
+    <div className="space-y-2">
+      {blocks.map((block, bIdx) => {
+        const lines = block.split('\n').map((l) => l.trim()).filter(Boolean)
+        if (lines.length === 0) return null
+
+        // Check if block is a bullet list (lines start with * or - or •)
+        const isBulletList = lines.every((l) => /^[*•-]\s+/.test(l))
+        if (isBulletList) {
+          return (
+            <ul key={`b-${bIdx}`} className="list-disc list-inside space-y-1 pl-1 text-left">
+              {lines.map((line, lIdx) => {
+                const cleaned = line.replace(/^[*•-]\s+/, '')
+                return (
+                  <li key={`li-${bIdx}-${lIdx}`} className="leading-relaxed">
+                    {renderInlineFormatting(cleaned, `li-${bIdx}-${lIdx}`)}
+                  </li>
+                )
+              })}
+            </ul>
+          )
+        }
+
+        // Check if block is a numbered list (lines start with 1. 2. etc.)
+        const isNumberedList = lines.every((l) => /^\d+\.\s+/.test(l))
+        if (isNumberedList) {
+          return (
+            <ol key={`ol-${bIdx}`} className="list-decimal list-inside space-y-1 pl-1 text-left">
+              {lines.map((line, lIdx) => {
+                const cleaned = line.replace(/^\d+\.\s+/, '')
+                return (
+                  <li key={`oli-${bIdx}-${lIdx}`} className="leading-relaxed">
+                    {renderInlineFormatting(cleaned, `oli-${bIdx}-${lIdx}`)}
+                  </li>
+                )
+              })}
+            </ol>
+          )
+        }
+
+        // Normal paragraph with line breaks if any
+        return (
+          <p key={`p-${bIdx}`} className="leading-relaxed text-left">
+            {lines.map((line, lIdx) => (
+              <React.Fragment key={`pl-${bIdx}-${lIdx}`}>
+                {lIdx > 0 && <br />}
+                {renderInlineFormatting(line, `pl-${bIdx}-${lIdx}`)}
+              </React.Fragment>
+            ))}
+          </p>
+        )
+      })}
+    </div>
+  )
+}
+
 export function YourAISection() {
   const { isDarkMode, voiceEnabled, setVoiceEnabled, educationLevel } = useAppStore()
 
@@ -407,6 +496,80 @@ export function YourAISection() {
       }
     : null
 
+  // Visual Image loading & error state
+  const [imageLoading, setImageLoading] = useState(false)
+  const [imageError, setImageError] = useState(false)
+
+  useEffect(() => {
+    if (activeVisual?.url) {
+      setImageLoading(true)
+      setImageError(false)
+    }
+  }, [activeVisual?.url])
+
+  // Speech synthesis state & control
+  const [speakingMsgId, setSpeakingMsgId] = useState<string | null>(null)
+
+  const handleToggleSpeak = (msgId: string, textToSpeak: string) => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return
+
+    try {
+      if (speakingMsgId === msgId) {
+        window.speechSynthesis.cancel()
+        setSpeakingMsgId(null)
+        return
+      }
+
+      window.speechSynthesis.cancel()
+      const utterance = new SpeechSynthesisUtterance(textToSpeak)
+
+      const langMap: Record<string, string> = {
+        hi: 'hi-IN',
+        kru: 'hi-IN',
+        en: 'en-US',
+        bn: 'bn-IN',
+        te: 'te-IN',
+        mr: 'mr-IN',
+        ta: 'ta-IN',
+        gu: 'gu-IN',
+        kn: 'kn-IN',
+        ml: 'ml-IN',
+        pa: 'pa-IN',
+        or: 'or-IN',
+        as: 'as-IN',
+        ur: 'ur-IN',
+        sa: 'hi-IN',
+        ne: 'ne-NP',
+      }
+      const targetCode = langMap[targetLangId] || 'en-US'
+      utterance.lang = targetCode
+
+      const voices = window.speechSynthesis.getVoices()
+      const matchedVoice = voices.find((v) =>
+        v.lang.toLowerCase().startsWith(targetCode.toLowerCase().slice(0, 2))
+      )
+      if (matchedVoice) {
+        utterance.voice = matchedVoice
+      }
+
+      utterance.onend = () => setSpeakingMsgId(null)
+      utterance.onerror = () => setSpeakingMsgId(null)
+
+      setSpeakingMsgId(msgId)
+      window.speechSynthesis.speak(utterance)
+    } catch {
+      setSpeakingMsgId(null)
+    }
+  }
+
+  useEffect(() => {
+    return () => {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel()
+      }
+    }
+  }, [])
+
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -430,9 +593,9 @@ export function YourAISection() {
     setHistoryOpen(false)
   }
 
-  const handleSendMessage = async (e?: React.FormEvent) => {
+  const handleSendMessage = async (e?: React.FormEvent, overrideQuery?: string) => {
     if (e) e.preventDefault()
-    const query = inputQuery.trim()
+    const query = (overrideQuery || inputQuery).trim()
     if (!query || isThinking) return
 
     const userMsg: ChatMessage = {
@@ -735,13 +898,43 @@ export function YourAISection() {
                   }`}
                 >
                   {msg.sender === 'ai' && (
-                    <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400 mb-1.5">
-                      <Sparkles size={12} />
-                      <span>YOUR AI SYNTHESIS</span>
+                    <div className="flex items-center justify-between gap-2 text-[10px] font-bold uppercase tracking-wider text-cyan-600 dark:text-cyan-400 mb-2">
+                      <div className="flex items-center gap-1.5">
+                        <Sparkles size={12} />
+                        <span>YOUR AI SYNTHESIS</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleSpeak(msg.id, msg.text)}
+                        className={`flex items-center gap-1 px-2 py-0.5 rounded-full border transition-all cursor-pointer ${
+                          speakingMsgId === msg.id
+                            ? 'bg-cyan-500 text-white border-cyan-400 animate-pulse'
+                            : isDarkMode
+                            ? 'bg-white/[0.04] hover:bg-white/[0.08] border-white/[0.08] text-[#A3A39E] hover:text-cyan-400'
+                            : 'bg-black/[0.03] hover:bg-black/[0.06] border-black/[0.05] text-[#6F6F6A] hover:text-cyan-600'
+                        }`}
+                        title={speakingMsgId === msg.id ? 'Stop audio' : 'Listen aloud'}
+                      >
+                        {speakingMsgId === msg.id ? (
+                          <>
+                            <VolumeX size={11} />
+                            <span className="text-[9px] font-mono">STOP</span>
+                          </>
+                        ) : (
+                          <>
+                            <Volume2 size={11} />
+                            <span className="text-[9px] font-mono">LISTEN</span>
+                          </>
+                        )}
+                      </button>
                     </div>
                   )}
 
-                  <p className="font-normal">{msg.text}</p>
+                  {msg.sender === 'ai' ? (
+                    renderFormattedText(msg.text)
+                  ) : (
+                    <p className="font-normal">{msg.text}</p>
+                  )}
 
                   {/* Vernacular Regional Translation */}
                   {msg.translation && (
@@ -774,7 +967,31 @@ export function YourAISection() {
           </div>
 
           {/* Chat Input Console */}
-          <div className="p-4 border-t border-black/[0.05] dark:border-white/[0.06] bg-white/40 dark:bg-white/[0.02]">
+          <div className="p-4 border-t border-black/[0.05] dark:border-white/[0.06] bg-white/40 dark:bg-white/[0.02] space-y-2.5">
+            {/* Quick Demo Suggestion Pills */}
+            {messages.filter((m) => m.sender === 'user').length <= 2 && (
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-left scrollbar-none">
+                <span className="text-[10px] uppercase font-bold tracking-wider text-[#A3A39E] shrink-0 mr-1 hidden sm:inline">
+                  SUGGESTED:
+                </span>
+                {DEMO_PROMPTS.map((prompt) => (
+                  <button
+                    key={prompt}
+                    type="button"
+                    onClick={() => handleSendMessage(undefined, prompt)}
+                    disabled={isThinking}
+                    className={`shrink-0 text-[11px] px-3 py-1.5 rounded-full border transition-all cursor-pointer disabled:opacity-40 whitespace-nowrap ${
+                      isDarkMode
+                        ? 'bg-white/[0.04] hover:bg-white/[0.09] hover:border-cyan-400/40 border-white/[0.08] text-[#F5F5F5]'
+                        : 'bg-[#FAFAF8] hover:bg-white hover:border-cyan-500/40 border-black/[0.06] text-[#171717] shadow-xs'
+                    }`}
+                  >
+                    {prompt}
+                  </button>
+                ))}
+              </div>
+            )}
+
             <form onSubmit={handleSendMessage} className="flex items-center gap-2">
               
               <input
@@ -853,16 +1070,48 @@ export function YourAISection() {
                 transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
                 className="flex-1 flex flex-col justify-between"
               >
-                <div className="relative rounded-2xl overflow-hidden border border-black/[0.06] dark:border-white/[0.08] shadow-subtle group">
-                  <img
-                    src={activeVisual.url}
-                    alt={activeVisual.title}
-                    className="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
-                  <div className="absolute bottom-3 left-3 right-3 text-white">
-                    <p className="text-xs font-bold leading-snug">{activeVisual.title}</p>
-                  </div>
+                <div className="relative rounded-2xl overflow-hidden border border-black/[0.06] dark:border-white/[0.08] shadow-subtle group min-h-[256px] bg-black/5 dark:bg-white/[0.02]">
+                  {/* Skeleton Placeholder while loading */}
+                  {imageLoading && !imageError && (
+                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/5 dark:bg-white/[0.03] animate-pulse">
+                      <ImageIcon size={28} className="text-cyan-500/40 mb-2 animate-bounce" />
+                      <span className="text-[11px] font-medium text-[#A3A39E]">Loading visual model...</span>
+                    </div>
+                  )}
+
+                  {/* Graceful Fallback if image fails */}
+                  {imageError ? (
+                    <div className="w-full h-64 flex flex-col items-center justify-center p-6 text-center bg-cyan-500/[0.03] border border-cyan-500/20 rounded-2xl">
+                      <div className="w-12 h-12 rounded-full bg-cyan-500/10 flex items-center justify-center text-cyan-500 mb-3">
+                        <ImageIcon size={22} />
+                      </div>
+                      <p className="text-xs font-bold text-[#171717] dark:text-[#F5F5F5] mb-1">
+                        {activeVisual.title}
+                      </p>
+                      <p className="text-[11px] text-[#A3A39E] max-w-xs">
+                        {activeVisual.description}
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <img
+                        src={activeVisual.url}
+                        alt={activeVisual.title}
+                        onLoad={() => setImageLoading(false)}
+                        onError={() => {
+                          setImageLoading(false)
+                          setImageError(true)
+                        }}
+                        className={`w-full h-64 object-cover transition-all duration-500 group-hover:scale-105 ${
+                          imageLoading ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
+                        }`}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+                      <div className="absolute bottom-3 left-3 right-3 text-white">
+                        <p className="text-xs font-bold leading-snug">{activeVisual.title}</p>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <div className="p-4 rounded-2xl bg-white/60 dark:bg-white/[0.03] border border-black/[0.05] dark:border-white/[0.06] space-y-1.5 mt-4">
