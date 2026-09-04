@@ -60,7 +60,7 @@ class TestGroqClient:
         mock_resp = _mock_groq_response("  नमस्ते  ")
         with patch("app.core.config.settings") as mock_settings, \
              patch("groq.AsyncGroq") as mock_groq_cls:
-            mock_settings.GROQ_API_KEY = "gsk_test"
+            mock_settings.GROQ_API_KEY = "mock_groq_api_key"
             mock_settings.GROQ_MODEL = "llama-3.3-70b-versatile"
             mock_settings.GROQ_TIMEOUT_SECONDS = 10.0
             mock_client = AsyncMock()
@@ -78,7 +78,7 @@ class TestGroqClient:
         mock_resp = _mock_groq_response("UNKNOWN")
         with patch("app.core.config.settings") as mock_settings, \
              patch("groq.AsyncGroq") as mock_groq_cls:
-            mock_settings.GROQ_API_KEY = "gsk_test"
+            mock_settings.GROQ_API_KEY = "mock_groq_api_key"
             mock_settings.GROQ_MODEL = "llama-3.3-70b-versatile"
             mock_settings.GROQ_TIMEOUT_SECONDS = 10.0
             mock_client = AsyncMock()
@@ -96,7 +96,7 @@ class TestGroqClient:
         mock_resp = _mock_groq_response("")
         with patch("app.core.config.settings") as mock_settings, \
              patch("groq.AsyncGroq") as mock_groq_cls:
-            mock_settings.GROQ_API_KEY = "gsk_test"
+            mock_settings.GROQ_API_KEY = "mock_groq_api_key"
             mock_settings.GROQ_MODEL = "llama-3.3-70b-versatile"
             mock_settings.GROQ_TIMEOUT_SECONDS = 10.0
             mock_client = AsyncMock()
@@ -120,7 +120,7 @@ class TestGroqClient:
 
         with patch("app.core.config.settings") as mock_settings, \
              patch("groq.AsyncGroq") as mock_groq_cls:
-            mock_settings.GROQ_API_KEY = "gsk_test"
+            mock_settings.GROQ_API_KEY = "mock_groq_api_key"
             mock_settings.GROQ_MODEL = "llama-3.3-70b-versatile"
             mock_settings.GROQ_TIMEOUT_SECONDS = 10.0
             mock_client = AsyncMock()
@@ -143,7 +143,7 @@ class TestGroqClient:
 
         with patch("app.core.config.settings") as mock_settings, \
              patch("groq.AsyncGroq") as mock_groq_cls:
-            mock_settings.GROQ_API_KEY = "gsk_test"
+            mock_settings.GROQ_API_KEY = "mock_groq_api_key"
             mock_settings.GROQ_MODEL = "llama-3.3-70b-versatile"
             mock_settings.GROQ_TIMEOUT_SECONDS = 10.0
             mock_client = AsyncMock()
