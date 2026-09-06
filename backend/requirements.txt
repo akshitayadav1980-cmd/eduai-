@@ -13,9 +13,10 @@ uvicorn[standard]==0.34.3
 pydantic==2.11.4
 
 # ── Database ──────────────────────────────────────────────────────────────────
-# SQLAlchemy 2.x async ORM + PostgreSQL async driver
+# SQLAlchemy 2.x async ORM + PostgreSQL drivers
 sqlalchemy[asyncio]==2.0.41
 asyncpg==0.30.0
+psycopg2-binary==2.9.10
 
 # ── Environment variable loading ──────────────────────────────────────────────
 python-dotenv==1.2.1
