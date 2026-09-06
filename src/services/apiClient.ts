@@ -2,7 +2,9 @@
  * Central API Client for Vernacular AI frontend.
  *
  * - Uses native `fetch` (no external dependencies).
- * - Routes via Vite dev proxy to `/api/v1/...`.
+ * - In development: routes via Vite dev proxy to `/api/v1/...`.
+ * - In production: prepends VITE_API_URL (e.g. https://eduai-swe0.onrender.com)
+ *   so requests reach the live FastAPI backend instead of the Netlify origin.
  * - Reads/writes JWT access token in `localStorage`.
  * - Automatically attaches `Authorization: Bearer <token>` when available.
  * - Parses JSON responses and handles HTTP errors cleanly.
@@ -10,7 +12,13 @@
  */
 
 const TOKEN_STORAGE_KEY = 'vernacular_token'
-const API_BASE = '/api/v1'
+
+// In dev, VITE_API_URL is unset so requests go to '' (relative) and the
+// Vite proxy forwards /api/v1/... to localhost:8001.
+// In production, set VITE_API_URL=https://eduai-swe0.onrender.com in Netlify
+// environment variables so the browser sends requests to the live backend.
+const API_ORIGIN = (import.meta.env.VITE_API_URL as string | undefined) ?? ''
+const API_BASE = `${API_ORIGIN}/api/v1`
 
 export interface ApiErrorDetail {
   status: number
