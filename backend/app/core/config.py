@@ -46,11 +46,13 @@ class Settings:
     # ── CORS ─────────────────────────────────────────────────────────────────
     # Comma-separated list of allowed origins.
     # In development the Vite dev server runs on port 5173 by default.
+    # The production Netlify frontend origin is included so Render deployments
+    # work without requiring an explicit CORS_ORIGINS environment variable.
     CORS_ORIGINS: List[str] = [
         origin.strip()
         for origin in os.getenv(
             "CORS_ORIGINS",
-            "http://localhost:5173,http://127.0.0.1:5173",
+            "http://localhost:5173,http://127.0.0.1:5173,https://vernaculareducation.netlify.app",
         ).split(",")
         if origin.strip()
     ]
