@@ -51,8 +51,14 @@ def _get_engine():
                 "Copy backend/.env.example to backend/.env and set the value. "
                 "Example: postgresql+asyncpg://postgres:PASSWORD@localhost:5432/vernacular_ai"
             )
+        db_url = settings.DATABASE_URL
+        if db_url.startswith("postgres://"):
+            db_url = db_url.replace("postgres://", "postgresql+asyncpg://", 1)
+        elif db_url.startswith("postgresql://") and not db_url.startswith("postgresql+asyncpg://"):
+            db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+
         _engine = create_async_engine(
-            settings.DATABASE_URL,
+            db_url,
             echo=settings.DEBUG,   # log SQL in development
             pool_pre_ping=True,    # verify connection liveness before each use
         )
