@@ -16,13 +16,13 @@ export interface GlassCardProps extends Omit<HTMLMotionProps<'div'>, 'children'>
 
 const variantStyles: Record<GlassCardVariant, string> = {
   default:
-    'bg-white/80 backdrop-blur-2xl border border-black/[0.06] shadow-editorial text-[#171717]',
+    'bg-[#0e1014]/80 backdrop-blur-2xl border border-white/10 shadow-2xl text-white',
   subtle:
-    'bg-white/50 backdrop-blur-md border border-black/[0.04] shadow-sm text-[#171717]',
+    'bg-[#0e1014]/50 backdrop-blur-md border border-white/[0.08] text-white/90 shadow-md',
   interactive:
-    'bg-white/80 backdrop-blur-2xl border border-black/[0.06] shadow-editorial hover:bg-white/95 hover:border-indigo-500/30 hover:shadow-warm-glass transition-all duration-300 cursor-pointer text-[#171717]',
+    'bg-[#0e1014]/80 backdrop-blur-2xl border border-white/10 shadow-xl hover:bg-[#151821]/90 hover:border-cyan-400/50 hover:shadow-cyan-500/20 transition-all duration-300 cursor-pointer text-white',
   highlighted:
-    'bg-white/90 backdrop-blur-3xl border border-indigo-500/25 shadow-editorial text-[#171717]',
+    'bg-[#121622]/90 backdrop-blur-3xl border border-cyan-400/60 shadow-glow-cyan-subtle ring-1 ring-cyan-400/30 text-white',
 }
 
 const paddingStyles: Record<GlassCardPadding, string> = {
@@ -59,11 +59,11 @@ export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(
     return (
       <motion.div
         ref={ref}
-        whileHover={isInteractive ? { y: -2, scale: 1.005 } : undefined}
+        whileHover={isInteractive ? { y: -3, scale: 1.008 } : undefined}
         whileTap={isInteractive ? { scale: 0.99 } : undefined}
-        transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+        transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
         className={[
-          'relative rounded-2xl overflow-hidden',
+          'relative rounded-2xl overflow-hidden liquid-glass',
           variantStyles[variant],
           paddingStyles[padding],
           glowStyles[glow],
@@ -73,9 +73,9 @@ export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(
           .join(' ')}
         {...rest}
       >
-        {/* Subtle Top Inner Highlight */}
+        {/* Crisp Top Inner Highlight */}
         <div
-          className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/80 to-transparent pointer-events-none"
+          className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none"
           aria-hidden="true"
         />
 

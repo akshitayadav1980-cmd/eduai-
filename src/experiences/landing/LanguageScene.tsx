@@ -74,21 +74,21 @@ export function LanguageScene() {
         
         {/* Section Header */}
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/80 border border-black/[0.06] text-[#525252] text-xs font-semibold uppercase tracking-wider backdrop-blur-xl shadow-sm">
-            <Globe size={13} className="text-indigo-600" />
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-white text-xs font-semibold uppercase tracking-wider backdrop-blur-2xl shadow-xl">
+            <Globe size={14} className="text-cyan-400" />
             <span>Regional Language Intelligence</span>
           </div>
-          <h2 className="font-display text-3xl sm:text-5xl font-bold tracking-tight text-[#171717]">
+          <h2 className="font-display text-3xl sm:text-5xl font-extrabold tracking-tight text-white">
             What language feels natural to you?
           </h2>
-          <p className="font-serif text-base sm:text-lg text-[#525252] max-w-md mx-auto">
+          <p className="font-serif text-base sm:text-lg text-white/70 max-w-md mx-auto">
             Choose your mother tongue. The AI recalibrates its syntax and vocabulary in real-time.
           </p>
         </div>
 
         {/* Floating Language Tiles */}
         <div
-          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 max-w-3xl mx-auto pt-2"
+          className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3.5 sm:gap-4 max-w-3xl mx-auto pt-2"
           role="radiogroup"
           aria-label="Select your mother tongue"
         >
@@ -102,7 +102,9 @@ export function LanguageScene() {
                 padding="md"
                 onClick={() => handleSelect(lang)}
                 className={`relative flex flex-col items-center justify-center text-center group cursor-pointer transition-all duration-300 ${
-                  isSelected ? 'ring-2 ring-indigo-500 bg-white/95 shadow-editorial' : ''
+                  isSelected
+                    ? 'ring-2 ring-cyan-400 bg-[#121622]/90 border-cyan-400/60 shadow-glow-cyan-subtle scale-[1.03] z-10'
+                    : 'bg-[#0e1014]/70 border-white/10 hover:bg-[#151821]/80 hover:border-cyan-400/40'
                 }`}
                 role="radio"
                 aria-checked={isSelected}
@@ -118,17 +120,17 @@ export function LanguageScene() {
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="absolute top-2.5 right-2.5 w-5 h-5 rounded-full bg-[#171717] flex items-center justify-center text-white shadow-sm font-bold"
+                    className="absolute top-2.5 right-2.5 w-5 h-5 rounded-full bg-cyan-400 flex items-center justify-center text-black shadow-md font-bold"
                   >
                     <Check size={12} strokeWidth={3} />
                   </motion.div>
                 )}
 
-                <span className={`text-2xl sm:text-3xl font-extrabold mb-1 tracking-tight ${isSelected ? 'text-[#171717]' : 'text-[#262626]'}`}>
+                <span className={`text-2xl sm:text-3xl font-black mb-1 tracking-tight ${isSelected ? 'text-white' : 'text-white/90'}`}>
                   {lang.nativeName}
                 </span>
 
-                <span className={`text-xs sm:text-sm font-medium ${isSelected ? 'text-indigo-600 font-semibold' : 'text-[#737373]'}`}>
+                <span className={`text-xs sm:text-sm font-medium ${isSelected ? 'text-cyan-300 font-semibold' : 'text-white/60'}`}>
                   {lang.name}
                 </span>
 
@@ -137,7 +139,7 @@ export function LanguageScene() {
                   onClick={(e) => handlePronounce(e, lang)}
                   aria-label={`Hear ${lang.name} pronunciation`}
                   title={`Pronounce ${lang.nativeName}`}
-                  className="mt-2.5 p-1.5 rounded-lg bg-black/[0.03] hover:bg-black/[0.08] text-[#737373] hover:text-[#171717] transition-colors"
+                  className="mt-2.5 p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition-colors"
                 >
                   <Volume2 size={13} />
                 </button>
@@ -155,9 +157,9 @@ export function LanguageScene() {
                 initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -6 }}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/90 border border-black/[0.06] text-xs sm:text-sm text-[#171717] backdrop-blur-xl shadow-editorial"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-[#0e1014]/90 border border-cyan-400/40 text-xs sm:text-sm text-white backdrop-blur-2xl shadow-2xl"
               >
-                <Sparkles size={14} className="text-indigo-600 shrink-0" />
+                <Sparkles size={14} className="text-cyan-400 shrink-0" />
                 <span>{confirmationText}</span>
               </motion.div>
             )}

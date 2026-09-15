@@ -56,14 +56,14 @@ export function EducationScene() {
         
         {/* Section Header */}
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/80 border border-black/[0.06] text-[#525252] text-xs font-semibold uppercase tracking-wider backdrop-blur-xl shadow-sm">
-            <Layers size={13} className="text-violet-600" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/15 text-white/80 text-xs font-semibold uppercase tracking-wider backdrop-blur-xl shadow-lg">
+            <Layers size={13} className="text-violet-400" />
             <span>Cognitive Depth Calibration</span>
           </div>
-          <h2 className="font-display text-3xl sm:text-5xl font-bold tracking-tight text-[#171717]">
+          <h2 className="font-display text-3xl sm:text-5xl font-bold tracking-tight text-white">
             How deeply do you want to understand?
           </h2>
-          <p className="font-serif text-base sm:text-lg text-[#525252] max-w-md mx-auto">
+          <p className="font-serif text-base sm:text-lg text-white/70 max-w-md mx-auto">
             Choose your learning level. The AI shifts from simple analogies to rigorous technical depth.
           </p>
         </div>
@@ -85,7 +85,7 @@ export function EducationScene() {
                 padding="md"
                 onClick={() => handleSelect(lvl.id)}
                 className={`relative flex flex-col justify-between text-left group cursor-pointer transition-all duration-300 min-h-[220px] md:min-h-[250px] ${
-                  isSelected ? 'ring-2 ring-indigo-600 bg-white/95 shadow-editorial md:scale-105 z-10' : 'opacity-85 hover:opacity-100'
+                  isSelected ? 'ring-2 ring-indigo-400 bg-white/15 border-indigo-400/50 shadow-glow-indigo-subtle md:scale-105 z-10' : 'opacity-80 hover:opacity-100'
                 }`}
                 role="radio"
                 aria-checked={isSelected}
@@ -102,33 +102,33 @@ export function EducationScene() {
                     <div
                       className={`p-2.5 rounded-xl border ${
                         isSelected
-                          ? 'bg-indigo-50 border-indigo-200 text-indigo-700 shadow-sm'
-                          : 'bg-black/[0.03] border-black/[0.06] text-[#737373] group-hover:text-[#171717]'
+                          ? 'bg-indigo-500/20 border-indigo-400/40 text-indigo-300 shadow-sm'
+                          : 'bg-white/5 border-white/10 text-white/60 group-hover:text-white'
                       }`}
                     >
                       <Icon size={18} />
                     </div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#737373]">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-white/50">
                       {lvl.grades}
                     </span>
                   </div>
 
                   <h3 className={`text-base font-bold tracking-tight mb-1 ${
-                    isSelected ? 'text-[#171717]' : 'text-[#262626]'
+                    isSelected ? 'text-white' : 'text-white/90'
                   }`}>
                     {lvl.title}
                   </h3>
 
-                  <p className="text-xs text-[#525252] leading-relaxed">
+                  <p className="text-xs text-white/60 leading-relaxed">
                     {lvl.description}
                   </p>
                 </div>
 
                 {/* Complexity Meters */}
-                <div className="w-full pt-3 border-t border-black/[0.06]">
-                  <div className="flex items-center justify-between text-[9px] font-semibold text-[#737373] mb-1">
+                <div className="w-full pt-3 border-t border-white/10">
+                  <div className="flex items-center justify-between text-[9px] font-semibold text-white/50 mb-1">
                     <span>DEPTH</span>
-                    <span className={isSelected ? 'text-indigo-600 font-bold' : ''}>LVL {lvl.difficulty}</span>
+                    <span className={isSelected ? 'text-indigo-300 font-bold' : ''}>LVL {lvl.difficulty}</span>
                   </div>
                   <div className="flex gap-1">
                     {[1, 2, 3, 4, 5].map((step) => (
@@ -137,9 +137,9 @@ export function EducationScene() {
                         className={`h-1 flex-1 rounded-full transition-all ${
                           step <= lvl.difficulty
                             ? isSelected
-                              ? 'bg-indigo-600'
-                              : 'bg-[#A3A3A3]'
-                            : 'bg-black/[0.06]'
+                              ? 'bg-indigo-400'
+                              : 'bg-white/40'
+                            : 'bg-white/10'
                         }`}
                       />
                     ))}

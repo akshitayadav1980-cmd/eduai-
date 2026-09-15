@@ -35,28 +35,28 @@ export function CoreRevealScene() {
       <div className="max-w-4xl mx-auto space-y-6">
         
         {/* Subtle Spatial Badge */}
-        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/80 border border-black/[0.06] text-[#525252] text-xs font-semibold uppercase tracking-wider backdrop-blur-xl shadow-sm">
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/15 text-white/80 text-xs font-semibold uppercase tracking-wider backdrop-blur-xl shadow-lg">
           <span>The Spatial AI Core</span>
         </div>
 
         {/* Minimal Editorial Statement */}
-        <h2 className="font-display text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-[#171717] leading-[1.05]">
+        <h2 className="font-display text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-white leading-[1.05]">
           A new medium for learning.
         </h2>
 
         {/* Supporting Copy */}
-        <p className="font-serif text-lg sm:text-2xl text-[#525252] font-normal max-w-xl mx-auto leading-relaxed text-balance">
+        <p className="font-serif text-lg sm:text-2xl text-white/70 font-normal max-w-xl mx-auto leading-relaxed text-balance">
           An AI environment that understands your regional mother tongue and adapts explanations to your educational level.
         </p>
 
         {/* Minimal Context Pills */}
         <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-xl bg-white/80 border border-black/[0.06] text-xs font-medium text-[#404040] shadow-sm">
-            <Globe size={14} className="text-indigo-600" />
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-xl bg-white/10 border border-white/15 text-xs font-medium text-white/90 backdrop-blur-xl shadow-sm">
+            <Globe size={14} className="text-cyan-400" />
             <span>11 Indic Languages</span>
           </div>
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-xl bg-white/80 border border-black/[0.06] text-xs font-medium text-[#404040] shadow-sm">
-            <Layers size={14} className="text-violet-600" />
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-xl bg-white/10 border border-white/15 text-xs font-medium text-white/90 backdrop-blur-xl shadow-sm">
+            <Layers size={14} className="text-indigo-400" />
             <span>Primary → Professional</span>
           </div>
         </div>

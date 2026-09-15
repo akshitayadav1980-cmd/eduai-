@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { ArrowRight, ChevronDown } from 'lucide-react'
+import { ArrowRight, ChevronDown, Sparkles } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useExperienceScroll } from '../../components/cinematic/ScrollContext'
 import { useAppStore } from '../../store/useAppStore'
@@ -28,7 +28,7 @@ export function IntroScene() {
   return (
     <section className="relative min-h-screen w-full flex flex-col items-center justify-between px-6 sm:px-12 py-12 sm:py-16 text-center pointer-events-none">
       
-      {/* ── Top Subtle Brand Tag (Clean & Understated) ── */}
+      {/* ── Top Subtle Brand Tag ── */}
       <motion.div
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
@@ -36,39 +36,42 @@ export function IntroScene() {
         style={{ opacity }}
         className="pt-4 sm:pt-6"
       >
-        <span className="text-[11px] sm:text-xs font-semibold tracking-[0.2em] uppercase text-[#737373]">
+        <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-white text-xs font-semibold tracking-[0.2em] uppercase backdrop-blur-2xl shadow-2xl">
+          <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
           Vernacular Intelligence
         </span>
       </motion.div>
 
-      {/* ── Main Editorial Hero Composition (Generous Breathing Room) ── */}
+      {/* ── Main Editorial Hero Composition ── */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 1.0, delay: 0.25 }}
         style={{ opacity }}
-        className="max-w-4xl mx-auto space-y-6 my-auto pointer-events-auto"
+        className="max-w-5xl mx-auto space-y-6 my-auto pointer-events-auto"
       >
         {/* Dominant Primary Brand Title */}
-        <h1 className="font-display text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-extrabold tracking-tight text-[#171717] leading-[0.95] select-none">
-          VERNACULAR AI
+        <h1 className="font-display text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black tracking-tight leading-[0.95] select-none">
+          <span className="animate-shiny inline-block bg-gradient-to-r from-white via-cyan-200 to-indigo-300 bg-clip-text text-transparent">
+            VERNACULAR AI
+          </span>
         </h1>
 
         {/* Elegant Secondary Headline */}
-        <p className="font-serif text-2xl sm:text-4xl md:text-5xl font-normal text-[#404040] tracking-tight leading-tight">
+        <p className="font-serif text-2xl sm:text-4xl md:text-5xl font-normal text-white/90 tracking-tight leading-tight drop-shadow-md">
           Intelligence in your language.
         </p>
 
         {/* Small Supporting Description */}
-        <p className="text-sm sm:text-base md:text-lg text-[#737373] font-normal max-w-lg mx-auto leading-relaxed pt-1">
+        <p className="text-sm sm:text-base md:text-lg text-white/70 font-normal max-w-lg mx-auto leading-relaxed pt-1">
           AI-powered learning that adapts to your language and your level.
         </p>
 
         {/* Clean Minimal CTAs */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-6">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6">
           <button
             onClick={handleStart}
-            className="inline-flex items-center gap-2 px-7 py-3.5 rounded-2xl bg-[#171717] hover:bg-[#262626] text-white text-sm sm:text-base font-medium shadow-editorial hover:shadow-xl transition-all duration-200 cursor-pointer"
+            className="inline-flex items-center gap-2.5 px-8 py-4 rounded-2xl bg-white hover:bg-white/90 text-black text-sm sm:text-base font-bold shadow-2xl hover:shadow-cyan-500/30 transition-all duration-200 cursor-pointer"
           >
             <span>Start Learning</span>
             <ArrowRight size={16} />
@@ -76,7 +79,7 @@ export function IntroScene() {
 
           <button
             onClick={handleExploreScroll}
-            className="inline-flex items-center gap-2 px-6 py-3.5 rounded-2xl bg-white/80 hover:bg-white text-[#171717] text-sm sm:text-base font-medium border border-black/[0.08] shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
+            className="inline-flex items-center gap-2.5 px-7 py-4 rounded-2xl bg-white/10 hover:bg-white/20 text-white text-sm sm:text-base font-semibold border border-white/20 backdrop-blur-2xl shadow-xl hover:shadow-2xl transition-all duration-200 cursor-pointer"
           >
             Explore Experience
           </button>
@@ -92,13 +95,13 @@ export function IntroScene() {
         className="pb-4 sm:pb-6 flex flex-col items-center gap-1.5 cursor-pointer pointer-events-auto"
         onClick={handleExploreScroll}
       >
-        <span className="text-[10px] font-medium tracking-[0.25em] uppercase text-[#A3A3A3]">
+        <span className="text-[10px] font-semibold tracking-[0.25em] uppercase text-white/50">
           Scroll to explore
         </span>
         <motion.div
-          animate={{ y: [0, 4, 0] }}
+          animate={{ y: [0, 6, 0] }}
           transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-          className="text-[#737373]"
+          className="text-white/70"
         >
           <ChevronDown size={18} />
         </motion.div>

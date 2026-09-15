@@ -19,21 +19,21 @@ export interface ButtonProps extends Omit<HTMLMotionProps<'button'>, 'children'>
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    'bg-[#171717] hover:bg-[#262626] text-[#FFFFFF] font-medium shadow-editorial border border-black/10 transition-all cursor-pointer',
+    'bg-white hover:bg-white/90 text-black font-semibold shadow-lg border border-white/20 transition-all cursor-pointer',
   secondary:
-    'bg-[#FAFAF8] dark:bg-[#18181D] hover:bg-[#F1F1EE] dark:hover:bg-[#23232A] text-[#171717] dark:text-[#F5F5F5] font-medium border border-black/[0.06] dark:border-white/[0.08] shadow-subtle transition-all cursor-pointer',
+    'bg-white/10 hover:bg-white/20 text-white font-medium border border-white/15 backdrop-blur-xl shadow-md transition-all cursor-pointer',
   glass:
-    'bg-white/80 dark:bg-white/[0.06] hover:bg-white dark:hover:bg-white/[0.1] text-[#171717] dark:text-[#F5F5F5] font-medium backdrop-blur-xl border border-black/[0.06] dark:border-white/[0.08] shadow-subtle transition-all cursor-pointer',
+    'bg-white/5 hover:bg-white/10 text-white font-medium backdrop-blur-xl border border-white/10 shadow-sm transition-all cursor-pointer',
   ghost:
-    'bg-transparent hover:bg-black/[0.04] dark:hover:bg-white/[0.06] text-[#6F6F6A] dark:text-[#A3A39E] hover:text-[#171717] dark:hover:text-[#F5F5F5] border border-transparent cursor-pointer',
+    'bg-transparent hover:bg-white/10 text-white/70 hover:text-white border border-transparent cursor-pointer',
   icon:
-    'p-2.5 rounded-xl bg-white/70 dark:bg-white/[0.06] hover:bg-white dark:hover:bg-white/[0.1] text-[#6F6F6A] dark:text-[#F5F5F5] border border-black/[0.05] dark:border-white/[0.08] backdrop-blur-lg shadow-subtle cursor-pointer',
+    'p-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/15 backdrop-blur-lg shadow-sm cursor-pointer',
   outline:
-    'bg-transparent hover:bg-indigo-50/50 dark:hover:bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-500/30 shadow-subtle cursor-pointer',
+    'bg-transparent hover:bg-cyan-500/10 text-cyan-300 border border-cyan-400/40 shadow-sm cursor-pointer',
   danger:
-    'bg-rose-600 hover:bg-rose-700 text-[#FFFFFF] font-medium border border-rose-700/30 shadow-subtle cursor-pointer',
+    'bg-rose-600 hover:bg-rose-700 text-white font-medium border border-rose-500/30 shadow-md cursor-pointer',
   success:
-    'bg-emerald-600 hover:bg-emerald-700 text-[#FFFFFF] font-medium border border-emerald-700/30 shadow-subtle cursor-pointer',
+    'bg-emerald-600 hover:bg-emerald-700 text-white font-medium border border-emerald-500/30 shadow-md cursor-pointer',
 }
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -85,7 +85,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         transition={{ duration: 0.18, ease: [0.16, 1, 0.3, 1] }}
         className={[
           'inline-flex items-center justify-center transition-all duration-200 cursor-pointer select-none',
-          'focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:ring-offset-2',
+          'focus-visible:ring-2 focus-visible:ring-cyan-400/50 focus-visible:ring-offset-2',
           'disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none',
           variantClasses[variant],
           variant !== 'icon' ? sizeClasses[size] : '',

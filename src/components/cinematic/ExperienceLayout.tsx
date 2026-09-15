@@ -76,9 +76,9 @@ export function ExperienceLayout({
     >
       <div
         ref={containerRef}
-        className="relative min-h-screen bg-[#F8F7F3] text-[#171717] selection:bg-indigo-100 selection:text-[#171717]"
+        className="relative min-h-screen bg-[#0c0c0c] text-white selection:bg-cyan-500/30 selection:text-white"
       >
-        {/* ── Fixed Ambient Warm Lighting ── */}
+        {/* ── Fixed Ambient Lighting & Video ── */}
         <CinematicBackground showGlow />
 
         {/* ── Fixed Pinned 3D Spatial Canvas ── */}
@@ -121,13 +121,13 @@ export function ExperienceLayout({
                   <motion.div
                     animate={{
                       scale: isActive ? 1.4 : 1,
-                      backgroundColor: isActive ? '#171717' : 'rgba(0,0,0,0.15)',
+                      backgroundColor: isActive ? '#00d2ff' : 'rgba(255,255,255,0.2)',
                     }}
                     className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
-                      isActive ? 'shadow-sm' : 'group-hover:bg-black/40'
+                      isActive ? 'shadow-glow-cyan-subtle' : 'group-hover:bg-white/50'
                     }`}
                   />
-                  <span className="absolute right-6 px-2.5 py-1 rounded-lg bg-white/90 border border-black/[0.06] text-[10px] font-semibold text-[#171717] opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-editorial">
+                  <span className="absolute right-6 px-2.5 py-1 rounded-lg bg-black/80 border border-white/20 text-[10px] font-semibold text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-2xl backdrop-blur-xl">
                     {['Awakening', 'Intelligence', 'Language', 'Depth', 'Adaptive Demo', 'AI Tutor'][i] ?? `Scene ${i + 1}`}
                   </span>
                 </button>

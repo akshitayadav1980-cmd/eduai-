@@ -106,7 +106,7 @@ const DEMO_CONCEPTS: Record<EducationLevel, DemoPayload> = {
       },
       bn: {
         question: 'আলোক নির্ভর ও আলোক নিরপেক্ষ বিক্রিয়ার বর্ণনা দাও।',
-        text: 'সালোকসংশ্লেষ দুটি দশায় ঘটে: থাইলাকয়েড ঝিল্লিতে আলোক-নির্ভর দশা এবং স্ট্রোমায় কেলভিন চক্র।',
+        text: 'সালোকসংশ্লেষ দুটি দশায় ঘটে: থাইলাকয়েড ঝিল্লিতে আলোক-নির্ভর দশায় এবং স্ট্রোমায় কেলভিন চক্র।',
       },
       ta: {
         question: 'ஒளி மற்றும் இருள் வினைகளை விளக்குக.',
@@ -245,23 +245,23 @@ export function AdaptiveScene() {
         
         {/* Section Header */}
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/80 border border-black/[0.06] text-[#525252] text-xs font-semibold uppercase tracking-wider backdrop-blur-xl shadow-sm">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 border border-white/15 text-white/80 text-xs font-semibold uppercase tracking-wider backdrop-blur-xl shadow-lg">
             <span>Adaptive Intelligence</span>
           </div>
-          <h2 className="font-display text-3xl sm:text-5xl font-bold tracking-tight text-[#171717]">
+          <h2 className="font-display text-3xl sm:text-5xl font-bold tracking-tight text-white">
             Same question. Different level-appropriate explanation.
           </h2>
-          <p className="font-serif text-base sm:text-lg text-[#525252] max-w-lg mx-auto">
+          <p className="font-serif text-base sm:text-lg text-white/70 max-w-lg mx-auto">
             Experience how Vernacular AI instantly shifts explanation models from elementary stories to research mechanics.
           </p>
         </div>
 
         {/* Interactive Adaptive Demo Console */}
-        <GlassCard variant="default" padding="lg" className="text-left border-black/[0.08] shadow-editorial">
+        <GlassCard variant="default" padding="lg" className="text-left border-white/15 bg-black/40 backdrop-blur-2xl shadow-2xl">
           
           {/* Level Switcher Header */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-black/[0.06]">
-            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-[#F5F4EF] border border-black/[0.06] overflow-x-auto no-scrollbar w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b border-white/10">
+            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-white/5 border border-white/10 overflow-x-auto no-scrollbar w-full sm:w-auto">
               {levels.map((lvl) => {
                 const isActive = currentLevel === lvl
                 return (
@@ -271,8 +271,8 @@ export function AdaptiveScene() {
                     className={[
                       'px-3 py-1 rounded-lg text-xs font-medium transition-all duration-200 cursor-pointer whitespace-nowrap',
                       isActive
-                        ? 'bg-[#171717] text-white font-semibold shadow-sm'
-                        : 'text-[#525252] hover:text-[#171717] hover:bg-white/60',
+                        ? 'bg-white text-black font-semibold shadow-md'
+                        : 'text-white/60 hover:text-white hover:bg-white/10',
                     ].join(' ')}
                   >
                     {DEMO_CONCEPTS[lvl].levelLabel}
@@ -283,8 +283,8 @@ export function AdaptiveScene() {
 
             {/* Language Selection Pills */}
             <div className="flex items-center gap-1.5 self-end sm:self-auto">
-              <Globe size={13} className="text-indigo-600 shrink-0" />
-              <div className="flex items-center gap-1 bg-[#F5F4EF] p-1 rounded-lg border border-black/[0.06]">
+              <Globe size={13} className="text-cyan-400 shrink-0" />
+              <div className="flex items-center gap-1 bg-white/5 p-1 rounded-lg border border-white/10">
                 {['hi', 'en', 'mr', 'bn', 'ta', 'te'].map((code) => {
                   const l = getLanguageById(code)
                   if (!l) return null
@@ -295,8 +295,8 @@ export function AdaptiveScene() {
                       onClick={() => setSelectedLanguageId(code)}
                       className={`px-2 py-0.5 rounded-md text-[11px] font-medium transition-all ${
                         isSelected
-                          ? 'bg-[#171717] text-white font-semibold shadow-xs'
-                          : 'text-[#525252] hover:text-[#171717]'
+                          ? 'bg-cyan-400 text-black font-semibold shadow-xs'
+                          : 'text-white/60 hover:text-white'
                       }`}
                     >
                       {l.nativeName}
@@ -310,20 +310,20 @@ export function AdaptiveScene() {
           {/* Question Prompt */}
           <div className="pt-4 pb-2">
             <div className="flex items-center justify-between gap-2 mb-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-700">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-300">
                 Depth Calibration & Vernacular Translation
               </span>
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-cyan-400/20 text-cyan-300 border border-cyan-400/30">
                 {currentContent.badge}
               </span>
             </div>
-            <h3 className="font-display text-base sm:text-lg font-bold text-[#171717] tracking-tight">
+            <h3 className="font-display text-base sm:text-lg font-bold text-white tracking-tight">
               "{currentExplanation.question}"
             </h3>
           </div>
 
           {/* Dynamic Explanation Crossfade */}
-          <div className="relative min-h-[110px] p-4 sm:p-5 rounded-xl bg-[#FAF9F6] border border-black/[0.05] my-2">
+          <div className="relative min-h-[110px] p-4 sm:p-5 rounded-xl bg-white/[0.04] border border-white/10 my-2">
             <AnimatePresence mode="wait">
               <motion.div
                 key={`${currentLevel}-${selectedLanguageId}`}
@@ -333,20 +333,20 @@ export function AdaptiveScene() {
                 transition={{ duration: 0.18 }}
                 className="space-y-3"
               >
-                <p className="text-xs sm:text-sm text-[#262626] leading-relaxed">
+                <p className="text-xs sm:text-sm text-white/90 leading-relaxed">
                   {currentExplanation.text}
                 </p>
 
-                <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-black/[0.05]">
-                  <span className="text-[9px] font-semibold uppercase tracking-wider text-[#737373]">
+                <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-white/10">
+                  <span className="text-[9px] font-semibold uppercase tracking-wider text-white/50">
                     Keywords:
                   </span>
                   {currentContent.keywords.map((kw) => (
                     <span
                       key={kw}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white border border-black/[0.06] text-[10px] font-medium text-[#404040] shadow-xs"
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-white/10 border border-white/15 text-[10px] font-medium text-white/80 shadow-xs"
                     >
-                      <CheckCircle2 size={10} className="text-indigo-600" />
+                      <CheckCircle2 size={10} className="text-cyan-400" />
                       {kw}
                     </span>
                   ))}
@@ -356,18 +356,18 @@ export function AdaptiveScene() {
           </div>
 
           {/* Footer controls */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pt-2 text-[11px] text-[#737373]">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pt-2 text-[11px] text-white/60">
             <div className="flex items-center gap-1.5">
-              <Layers size={12} className="text-violet-600 shrink-0" />
+              <Layers size={12} className="text-indigo-400 shrink-0" />
               <span>{currentContent.calibration}</span>
             </div>
 
             <button
               onClick={handleSpeak}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white hover:bg-[#F5F4EF] border border-black/[0.08] text-xs text-[#171717] transition-all font-medium cursor-pointer shadow-xs shrink-0"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-xs text-white transition-all font-medium cursor-pointer shadow-xs shrink-0"
               title="Listen to Vernacular Audio"
             >
-              <Volume2 size={13} className="text-indigo-600" />
+              <Volume2 size={13} className="text-cyan-400" />
               <span>Audio Voice</span>
             </button>
           </div>

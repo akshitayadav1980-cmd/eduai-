@@ -46,21 +46,21 @@ export function TutorEntryScene() {
       <div className="max-w-6xl mx-auto w-full space-y-6 pt-10 sm:pt-14">
         
         {/* Active Context Ribbon */}
-        <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/90 border border-black/[0.06] text-xs text-[#525252] backdrop-blur-xl shadow-editorial">
-          <Globe size={13} className="text-indigo-600" />
-          <span className="font-semibold text-[#171717]">{lang?.nativeName ?? 'English'}</span>
-          <span className="text-[#D4D4D4]">·</span>
-          <Layers size={13} className="text-violet-600" />
-          <span className="font-semibold text-[#171717]">{levelInfo.title}</span>
-          <span className="text-[10px] text-[#737373]">({levelInfo.grades})</span>
+        <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-white/10 border border-white/15 text-xs text-white/80 backdrop-blur-2xl shadow-2xl">
+          <Globe size={13} className="text-cyan-400" />
+          <span className="font-semibold text-white">{lang?.nativeName ?? 'English'}</span>
+          <span className="text-white/30">·</span>
+          <Layers size={13} className="text-indigo-400" />
+          <span className="font-semibold text-white">{levelInfo.title}</span>
+          <span className="text-[10px] text-white/50">({levelInfo.grades})</span>
         </div>
 
         {/* Section Header */}
         <div className="space-y-1.5">
-          <h2 className="font-display text-3xl sm:text-5xl font-bold tracking-tight text-[#171717]">
+          <h2 className="font-display text-3xl sm:text-5xl font-bold tracking-tight text-white">
             Integrated AI Tutor Workspace
           </h2>
-          <p className="font-serif text-xs sm:text-base text-[#525252] max-w-md mx-auto">
+          <p className="font-serif text-xs sm:text-base text-white/70 max-w-md mx-auto">
             A persistent spatial interface wrapped around the central AI Core with real-time synthesis and dialect intelligence.
           </p>
         </div>
@@ -69,23 +69,23 @@ export function TutorEntryScene() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-center text-left">
           
           {/* Left Pane: Chat Stream Preview */}
-          <GlassCard variant="default" padding="md" className="space-y-3 shadow-editorial border-black/[0.08]">
-            <div className="flex items-center justify-between text-xs pb-2 border-b border-black/[0.06]">
-              <span className="font-bold text-[#171717] flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+          <GlassCard variant="default" padding="md" className="space-y-3 bg-black/40 border-white/15 text-white shadow-2xl">
+            <div className="flex items-center justify-between text-xs pb-2 border-b border-white/10">
+              <span className="font-bold text-white flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 Live Vernacular Stream
               </span>
-              <span className="text-[10px] text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full font-semibold">ACTIVE</span>
+              <span className="text-[10px] text-cyan-300 bg-cyan-500/20 border border-cyan-400/30 px-2 py-0.5 rounded-full font-semibold">ACTIVE</span>
             </div>
 
             <div className="space-y-2 text-xs">
-              <div className="p-2.5 rounded-xl bg-[#FAF9F6] text-[#404040] border border-black/[0.05]">
-                <p className="text-[10px] text-[#737373] font-semibold mb-0.5">STUDENT QUERY</p>
+              <div className="p-2.5 rounded-xl bg-white/5 text-white/90 border border-white/10">
+                <p className="text-[10px] text-white/50 font-semibold mb-0.5">STUDENT QUERY</p>
                 <p>"Explain quantum photosynthesis in {lang?.name}."</p>
               </div>
 
-              <div className="p-2.5 rounded-xl bg-indigo-50/70 text-[#1e1b4b] border border-indigo-100">
-                <p className="text-[10px] text-indigo-700 font-semibold mb-0.5">AI TUTOR SYNTHESIS</p>
+              <div className="p-2.5 rounded-xl bg-indigo-500/20 text-indigo-100 border border-indigo-400/30">
+                <p className="text-[10px] text-indigo-300 font-semibold mb-0.5">AI TUTOR SYNTHESIS</p>
                 <p className="line-clamp-2">LHCII complex me quantum coherence photon transfer ki efficiency ko 99% tak badha deti hai...</p>
               </div>
             </div>
@@ -93,60 +93,60 @@ export function TutorEntryScene() {
 
           {/* Center Space: AI Core Presence */}
           <div className="flex flex-col items-center justify-center p-4 text-center space-y-2">
-            <div className="w-20 h-20 rounded-full bg-indigo-50 border border-indigo-200/80 blur-sm" />
-            <span className="text-[10px] font-bold uppercase tracking-widest text-[#737373]">
+            <div className="w-20 h-20 rounded-full bg-cyan-500/10 border border-cyan-400/30 blur-sm animate-pulse" />
+            <span className="text-[10px] font-bold uppercase tracking-widest text-white/50">
               Living 3D Spatial Entity
             </span>
           </div>
 
           {/* Right Pane: Quick AI Study Tools */}
-          <GlassCard variant="default" padding="md" className="space-y-3 shadow-editorial border-black/[0.08]">
-            <div className="flex items-center justify-between text-xs pb-2 border-b border-black/[0.06]">
-              <span className="font-bold text-[#171717] flex items-center gap-1.5">
-                <Sparkles size={14} className="text-indigo-600" />
+          <GlassCard variant="default" padding="md" className="space-y-3 bg-black/40 border-white/15 text-white shadow-2xl">
+            <div className="flex items-center justify-between text-xs pb-2 border-b border-white/10">
+              <span className="font-bold text-white flex items-center gap-1.5">
+                <Sparkles size={14} className="text-cyan-400" />
                 Cognitive Toolkit
               </span>
-              <span className="text-[10px] text-violet-700 bg-violet-50 px-2 py-0.5 rounded-full font-semibold">TOOLS</span>
+              <span className="text-[10px] text-violet-300 bg-violet-500/20 border border-violet-400/30 px-2 py-0.5 rounded-full font-semibold">TOOLS</span>
             </div>
 
             <div className="grid grid-cols-2 gap-2 text-xs">
               <button
                 onClick={() => handleLaunchTutor('Speak explanation aloud')}
-                className="flex items-center gap-1.5 p-2 rounded-lg bg-[#FAF9F6] hover:bg-indigo-50/80 border border-black/[0.05] text-[#404040] hover:text-indigo-900 transition-all text-left cursor-pointer"
+                className="flex items-center gap-1.5 p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/90 hover:text-white transition-all text-left cursor-pointer"
               >
-                <Volume2 size={13} className="text-indigo-600" />
+                <Volume2 size={13} className="text-cyan-400" />
                 <span>Listen Audio</span>
               </button>
 
               <button
                 onClick={() => handleLaunchTutor('Translate into mother tongue')}
-                className="flex items-center gap-1.5 p-2 rounded-lg bg-[#FAF9F6] hover:bg-indigo-50/80 border border-black/[0.05] text-[#404040] hover:text-indigo-900 transition-all text-left cursor-pointer"
+                className="flex items-center gap-1.5 p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/90 hover:text-white transition-all text-left cursor-pointer"
               >
-                <Globe size={13} className="text-indigo-600" />
+                <Globe size={13} className="text-cyan-400" />
                 <span>Translate</span>
               </button>
 
               <button
                 onClick={() => handleLaunchTutor('Simplify for elementary level')}
-                className="flex items-center gap-1.5 p-2 rounded-lg bg-[#FAF9F6] hover:bg-violet-50/80 border border-black/[0.05] text-[#404040] hover:text-violet-900 transition-all text-left cursor-pointer"
+                className="flex items-center gap-1.5 p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/90 hover:text-white transition-all text-left cursor-pointer"
               >
-                <Sparkles size={13} className="text-violet-600" />
+                <Sparkles size={13} className="text-violet-400" />
                 <span>Simplify</span>
               </button>
 
               <button
                 onClick={() => handleLaunchTutor('Generate practice quiz')}
-                className="flex items-center gap-1.5 p-2 rounded-lg bg-[#FAF9F6] hover:bg-emerald-50/80 border border-black/[0.05] text-[#404040] hover:text-emerald-900 transition-all text-left cursor-pointer"
+                className="flex items-center gap-1.5 p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/90 hover:text-white transition-all text-left cursor-pointer"
               >
-                <HelpCircle size={13} className="text-emerald-600" />
+                <HelpCircle size={13} className="text-emerald-400" />
                 <span>Generate Quiz</span>
               </button>
 
               <button
                 onClick={() => handleLaunchTutor('Make structured study notes')}
-                className="col-span-2 flex items-center justify-center gap-1.5 p-2 rounded-lg bg-[#FAF9F6] hover:bg-indigo-50/80 border border-black/[0.05] text-[#404040] hover:text-indigo-900 transition-all cursor-pointer"
+                className="col-span-2 flex items-center justify-center gap-1.5 p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/90 hover:text-white transition-all cursor-pointer"
               >
-                <FileText size={13} className="text-indigo-600" />
+                <FileText size={13} className="text-cyan-400" />
                 <span>Make Structured Study Notes</span>
               </button>
             </div>
@@ -155,7 +155,7 @@ export function TutorEntryScene() {
 
         {/* ── Query Input Console ── */}
         <div className="max-w-2xl mx-auto pt-2">
-          <GlassCard variant="default" padding="sm" className="border-black/[0.08] shadow-editorial bg-white/95">
+          <GlassCard variant="default" padding="sm" className="border-white/15 shadow-2xl bg-black/50 backdrop-blur-2xl">
             <form
               onSubmit={(e) => {
                 e.preventDefault()
@@ -168,13 +168,13 @@ export function TutorEntryScene() {
                 value={queryInput}
                 onChange={(e) => setQueryInput(e.target.value)}
                 placeholder={`Ask anything in ${lang?.name ?? 'your language'}...`}
-                className="flex-1 bg-transparent px-3 text-sm text-[#171717] placeholder:text-[#A3A3A3] outline-none"
+                className="flex-1 bg-transparent px-3 text-sm text-white placeholder:text-white/40 outline-none"
               />
 
               <button
                 type="button"
                 onClick={() => handleLaunchTutor()}
-                className="p-2 rounded-lg hover:bg-black/[0.04] text-[#737373] hover:text-[#171717] transition-colors cursor-pointer"
+                className="p-2 rounded-lg hover:bg-white/10 text-white/60 hover:text-white transition-colors cursor-pointer"
                 title="Voice Input"
               >
                 <Mic size={18} />
@@ -201,7 +201,7 @@ export function TutorEntryScene() {
             onClick={() => handleLaunchTutor()}
             icon={<ArrowRight size={18} />}
             iconPosition="right"
-            className="w-full sm:w-auto px-8 py-3.5 text-base font-medium shadow-editorial"
+            className="w-full sm:w-auto px-8 py-3.5 text-base font-semibold shadow-xl hover:shadow-cyan-500/20"
           >
             Launch Full Workspace
           </Button>
